@@ -19,8 +19,14 @@ use core::{
     mem::{size_of, size_of_val},
   };
 
-type Vertex = [f32; 3];
-const VERTICES: [Vertex; 3] = [[-0.5, -0.5, 0.0], [0.5, -0.5, 0.0], [0.0, 0.5, 0.0]];
+mod game_object;
+pub use game_object::*;
+
+mod vectors;
+pub use vectors::*;
+
+type Vertex = [f32; 6];
+const VERTICES: [Vertex; 3] = [[-0.5, -0.5, 0.0, 1.0, 0.0, 0.0], [0.5, -0.5, 0.0, 0.0, 1.0, 0.0], [0.0, 0.5, 0.0, 0.0, 0.0, 1.0]];
 
 // Include shaders
 const VERT_SHADER: &'static str = include_str!("shaders/default_shader.vert");
@@ -83,6 +89,7 @@ pub fn init_gl() {
             GL_STATIC_DRAW,
         );
 
+        // Enable pos attribute pointer
         glVertexAttribPointer(
             0,
             3,
@@ -92,6 +99,17 @@ pub fn init_gl() {
             0 as *const _,
         );
         glEnableVertexAttribArray(0);
+
+        // Enable color attribute pointer
+        glVertexAttribPointer(
+            1,
+            3,
+            GL_FLOAT,
+            0,
+            size_of::<Vertex>().try_into().unwrap(),
+            12 as *const _,
+        );
+        glEnableVertexAttribArray(1);
 
         let vertex_shader = glCreateShader(GL_VERTEX_SHADER);
         assert_ne!(vertex_shader, 0);
@@ -185,7 +203,7 @@ pub fn start_game_loop() {
     }
     
     if IS_RUNNING.load(Ordering::Relaxed) {
-        panic!("Game loop already running in another thread!");
+        panic!("Game loop already running!");
     }
     IS_RUNNING.store(true, Ordering::Relaxed);
 
@@ -193,12 +211,12 @@ pub fn start_game_loop() {
     let events = unsafe { EVENTS.assume_init_mut() };
     let glfw = unsafe { GLFW.assume_init_mut() };
 
-    static mut LAST_TICK: i64 = 0;
-    static mut LAST_FIXED_TICK: i64 = 0;
-    unsafe {
-        glGetInteger64v(GL_TIMESTAMP, &mut LAST_TICK);
-        LAST_FIXED_TICK = LAST_TICK;
-    }
+    let mut last_tick: i64 = 0;
+    let mut last_fixed_tick: i64;
+
+    unsafe { glGetInteger64v(GL_TIMESTAMP, &mut last_tick) };
+    last_fixed_tick = last_tick;
+    
     // Loop until the user closes the window
     while !window.should_close() {
         // Poll for and process events
@@ -214,21 +232,20 @@ pub fn start_game_loop() {
         }
 
         // Game tick
-        unsafe {
-            let mut current_time: i64 = 0;
-            glGetInteger64v(GL_TIMESTAMP, &mut current_time);
+        let mut current_time: i64 = 0;
+        unsafe {glGetInteger64v(GL_TIMESTAMP, &mut current_time)};
 
-            game_tick((current_time - LAST_TICK) as f32 / 1000000000f32);
-            LAST_TICK = current_time;
+        game_tick((current_time - last_tick) as f32 / 1000000000f32);
+        last_tick = current_time;
 
-            if current_time - LAST_FIXED_TICK >= FIXED_TICK_DURATION.load(Ordering::Relaxed) {
-                fixed_game_tick((current_time - LAST_FIXED_TICK) as f32 / 1000000000f32);
-                LAST_FIXED_TICK = current_time;
-            }
-
-            // Render
-            render();
+        if current_time - last_fixed_tick >= FIXED_TICK_DURATION.load(Ordering::Relaxed) {
+            fixed_game_tick((current_time - last_fixed_tick) as f32 / 1000000000f32);
+            last_fixed_tick = current_time;
         }
+
+        // Render
+        unsafe {render()};
+
         // Swap front and back buffers
         window.swap_buffers();
     }
@@ -265,13 +282,9 @@ unsafe fn render() {
 }
 
 fn game_tick(delta_time: f32) {
-    unsafe {
-        OFFSET1 += 0.1 * delta_time;
-    }
+    unsafe { OFFSET1 += 0.1 * delta_time; }
 }
 
 fn fixed_game_tick(delta_time: f32) {
-    unsafe {
-        OFFSET2 -= 0.1 * delta_time;
-    }
+    unsafe { OFFSET2 -= 0.1 * delta_time; }
 }
