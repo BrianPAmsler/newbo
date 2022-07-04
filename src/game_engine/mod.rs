@@ -36,7 +36,7 @@ static IS_RUNNING: AtomicBool = AtomicBool::new(false);
 
 static FIXED_TICK_DURATION: AtomicI64 = AtomicI64::new(1000000000i64 / 60i64);
 
-fn convert_string<'s>(s: *const u8) -> &'s str {
+fn convert_string<'a>(s: *const u8) -> &'a str {
     unsafe { std::str::from_utf8_unchecked(std::slice::from_raw_parts(s, strlen(s as *const i8))) }
 }
 
