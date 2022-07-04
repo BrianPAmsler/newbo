@@ -58,8 +58,6 @@ pub fn init_gl() {
     window.make_current();
     window.set_key_polling(true);
 
-    // I don't get what's happening here but whatever i'll figure it out later
-
     // Do gl stuff
     unsafe {
         WINDOW.write(window);
@@ -227,10 +225,10 @@ pub fn start_game_loop() {
                 fixed_game_tick((current_time - LAST_FIXED_TICK) as f32 / 1000000000f32);
                 LAST_FIXED_TICK = current_time;
             }
-        }
 
-        // Render
-        render();
+            // Render
+            render();
+        }
         // Swap front and back buffers
         window.swap_buffers();
     }
@@ -247,25 +245,23 @@ pub fn set_fixed_tick_rate(tickrate:  u32) {
 static mut OFFSET1: f32 = 0.0;
 static mut OFFSET2: f32 = 0.0;
 
-fn render() {
-    unsafe {
-        glClear(GL_COLOR_BUFFER_BIT);
-        
-        let program = GL_PROGRAM.assume_init();
-        let loc: i32 = glGetUniformLocation(program, b"offset\0" as *const u8);
+unsafe fn render() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    
+    let program = GL_PROGRAM.assume_init();
+    let loc: i32 = glGetUniformLocation(program, b"offset\0" as *const u8);
 
-        if loc >= 0 {
-            glUniform3f(loc, OFFSET1, 0.0, 0.0);
-        }
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-
-        if loc >= 0 {
-            glUniform3f(loc, OFFSET2, 0.0, 0.0);
-        }
-
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+    if loc >= 0 {
+        glUniform3f(loc, OFFSET1, 0.0, 0.0);
     }
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+
+    if loc >= 0 {
+        glUniform3f(loc, OFFSET2, 0.0, 0.0);
+    }
+
+    glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
 fn game_tick(delta_time: f32) {
