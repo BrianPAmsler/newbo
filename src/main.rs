@@ -17,10 +17,10 @@ fn main() {
     println!("new pos: {}", o.get_pos());
 
     println!("Initializing OpenGL...");
-    init_gl();
+    let mut engine = Engine::new();
     println!("OpenGL Initialized.");
 
     println!("Starting Game Loop...");
-    start_game_loop();
+    engine.start_game_loop();
     println!("Game Loop Exited.");
 }
