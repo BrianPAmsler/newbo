@@ -11,7 +11,7 @@ use std::sync::mpsc::Receiver;
 
 use std::sync::atomic::{Ordering, AtomicBool};
 
-use core::mem::{size_of_val};
+use core::mem::{size_of};
 
 use libc::strlen;
 
@@ -197,12 +197,10 @@ impl Graphics {
             
             println!("Buffering: vao = {}; vbo = {}", self.terrain_vao, self.terrain_vbo);
 
-            println!("Size of verticies: {}", size_of_val(&verticies));
-
             // Send verticies to gpu
             glBufferData(
                 GL_ARRAY_BUFFER,
-                size_of_val(&verticies) as isize,
+                (verticies.len() * size_of::<TerrainVertex>()) as isize,
                 verticies.as_ptr().cast(),
                 GL_STATIC_DRAW,
             );
