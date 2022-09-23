@@ -9,7 +9,7 @@ fn main() {
     println!("v1: {}", v1);
     println!("v2: {}", v2);
 
-    let mut o = GameObject::new(v1);
+    let mut o = create_object("Test".to_string(), v1, Option::None);
     println!("pos: {}", o.get_pos());
 
     v1.x = 5.0;

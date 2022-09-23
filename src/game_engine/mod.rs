@@ -3,7 +3,7 @@ mod game_object;
 mod vectors;
 
 pub use game_object::*;
-use glfw::{Key, Action};
+pub use glfw::{Key, Action, WindowEvent::Key as NewKey};
 pub use vectors::*;
 
 use graphics::*;
@@ -41,8 +41,7 @@ impl Engine {
         Graphics::get_gl_time(&mut last_tick);
         last_fixed_tick = last_tick;
         
-        // bad
-        let gfx_ptr = &mut self.gfx as *mut Graphics;
+        let mut should_close = false;
 
         // Loop until the user closes the window
         while self.gfx.window_alive() {
@@ -50,12 +49,16 @@ impl Engine {
             for (_, event) in self.gfx.get_window_events() {
                 println!("{:?}", event);
                 match event {
-                    glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                        // I don't know enough about rust to avoid this so...
-                        unsafe {(*gfx_ptr).close_window()};
+                    NewKey(Key::Escape, _, Action::Press, _) => {
+                        should_close = true;
                     },
                     _ => {},
                 }
+            }
+            
+            if should_close {
+                self.gfx.close_window();
+                break;
             }
 
             // Game tick
