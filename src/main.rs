@@ -12,7 +12,7 @@ fn main() {
     println!("v1: {}", v1);
     println!("v2: {}", v2);
 
-    let mut o = GameObject::create_empty();
+    let mut o = GameObject::create_empty("Test", None);
     println!("pos: {}", o.get_pos());
 
     v1.x = 5.0;
@@ -20,10 +20,10 @@ fn main() {
     println!("new pos: {}", o.get_pos());
 
     println!("Initializing OpenGL...");
-    let mut engine = Engine::new();
+    let mut engine = Engine::init_engine().unwrap();
     println!("OpenGL Initialized.");
 
     println!("Starting Game Loop...");
-    engine.start_game_loop();
+    engine.start_game_loop().unwrap();
     println!("Game Loop Exited.");
 }

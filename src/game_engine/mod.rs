@@ -9,6 +9,8 @@ pub use vectors::*;
 
 use graphics::*;
 
+use self::err::EngineError;
+
 const VERTICES: [TerrainVertex; 3] = [[-0.5, -0.5, 0.0, 1.0, 0.0, 0.0], [0.5, -0.5, 0.0, 0.0, 1.0, 0.0], [0.0, 0.5, 0.0, 0.0, 0.0, 1.0]];
 
 pub struct Engine {
@@ -20,18 +22,30 @@ pub struct Engine {
 }
 
 impl Engine {
-    pub fn new() -> Engine {
-        Graphics::init_gl().unwrap();
+    pub fn init_engine() -> Result<Engine, EngineError> {
+        let result = Graphics::init_gl();
+        if result.is_err() {
+            return Err(result.err().unwrap());
+        }
 
-        let mut gfx = Graphics::create_window().unwrap();
+        let mut gfx = {
+            let result = Graphics::create_window();
+
+            if result.is_err() {
+                return Err(result.err().unwrap())
+            }
+
+            result.unwrap()
+        };
+        
         gfx.buffer_verticies(&VERTICES);
 
-        Engine { running: false, fixed_tick_duration: 1000000000i64 / 60, gfx: gfx, offset1: 0.0, offset2: 0.0 }
+        Ok(Engine { running: false, fixed_tick_duration: 1000000000i64 / 60, gfx: gfx, offset1: 0.0, offset2: 0.0 })
     }
 
-    pub fn start_game_loop(&mut self) {
+    pub fn start_game_loop(&mut self) -> Result<(), EngineError> {
         if self.running {
-            panic!("Game loop already running!");
+            return Err("Game loop already running!".into());
         }
 
         self.running = true;
@@ -83,6 +97,8 @@ impl Engine {
         }
 
         self.running = false;
+
+        Ok(())
     }
 
     // Default value is 60 tps, so this may never need to be used.

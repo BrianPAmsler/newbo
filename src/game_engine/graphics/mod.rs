@@ -63,18 +63,17 @@ fn get_proc_address(window: &glfw::Window, fn_name: *const u8) -> *const c_void 
 impl Graphics {
     pub fn init_gl() -> Result<(), EngineError> {
         if GL_INITIALIZED.load(Ordering::Relaxed) {
-            // Maybe this should panic, I'm not really sure
-            eprintln!();
             return Err("GL Already Initialized!".into());
         }
         
         let init = glfw::init(glfw::FAIL_ON_ERRORS);
-        if init.is_ok() {
-            unsafe {GLFW.write(init.unwrap())};
-        } else {
+        
+        if init.is_err() {
             let err_str = format!("GL Init Error: {:?}", init.err().unwrap());
-            return Err(err_str.into())
+            return Err(err_str.into());
         }
+
+        unsafe {GLFW.write(init.unwrap())};
     
         GL_INITIALIZED.store(true, Ordering::Relaxed);
         Ok(())
