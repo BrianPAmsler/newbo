@@ -36,3 +36,9 @@ impl Display for Vector3 {
         write!(f, "({}, {}, {})", self.x, self.y, self.z)
     }
 }
+
+impl From<(f32, f32, f32)> for Vector3 {
+    fn from(val : (f32, f32, f32)) -> Self {
+        Self { x: val.0, y: val.1, z: val.2 }
+    }
+}

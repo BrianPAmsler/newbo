@@ -1,6 +1,7 @@
 mod graphics;
 mod game_object;
 mod vectors;
+mod err;
 
 pub use game_object::*;
 use glfw::{Key, Action};
@@ -20,9 +21,9 @@ pub struct Engine {
 
 impl Engine {
     pub fn new() -> Engine {
-        Graphics::init_gl();
+        Graphics::init_gl().unwrap();
 
-        let mut gfx = Graphics::create_window();
+        let mut gfx = Graphics::create_window().unwrap();
         gfx.buffer_verticies(&VERTICES);
 
         Engine { running: false, fixed_tick_duration: 1000000000i64 / 60, gfx: gfx, offset1: 0.0, offset2: 0.0 }
@@ -40,22 +41,23 @@ impl Engine {
 
         Graphics::get_gl_time(&mut last_tick);
         last_fixed_tick = last_tick;
-        
-        // bad
-        let gfx_ptr = &mut self.gfx as *mut Graphics;
 
         // Loop until the user closes the window
         while self.gfx.window_alive() {
+            let mut should_close = false;
             // Poll for and process events
             for (_, event) in self.gfx.get_window_events() {
                 println!("{:?}", event);
                 match event {
                     glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
-                        // I don't know enough about rust to avoid this so...
-                        unsafe {(*gfx_ptr).close_window()};
+                        should_close = true;
                     },
                     _ => {},
                 }
+            }
+
+            if should_close {
+                self.gfx.close_window();
             }
 
             // Game tick

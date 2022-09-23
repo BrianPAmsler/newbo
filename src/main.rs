@@ -1,3 +1,6 @@
+// Comment this out to see dead code warnings in the editor and/or debug build
+#![cfg_attr(debug_assertions, allow(dead_code))]
+
 mod game_engine;
 
 use game_engine::*;
@@ -9,7 +12,7 @@ fn main() {
     println!("v1: {}", v1);
     println!("v2: {}", v2);
 
-    let mut o = GameObject::new(v1);
+    let mut o = GameObject::create_empty();
     println!("pos: {}", o.get_pos());
 
     v1.x = 5.0;

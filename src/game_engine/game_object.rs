@@ -5,8 +5,8 @@ pub struct GameObject {
 }
 
 impl GameObject {
-    pub fn new(pos: Vector3) -> GameObject {
-        GameObject {pos: pos}
+    pub fn create_empty() -> GameObject {
+        GameObject {pos: (0.0, 0.0, 0.0).into() }
     }
 
     pub fn get_pos(&self) -> Vector3 {

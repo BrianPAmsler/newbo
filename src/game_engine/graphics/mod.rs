@@ -5,8 +5,8 @@ use glfw::{FlushedMessages, WindowEvent, Context};
 use gl33::global_loader::*;
 use gl33::gl_enumerations::*;
 
-use core::panic;
 use std::mem::MaybeUninit;
+use std::os::raw::c_void;
 use std::sync::mpsc::Receiver;
 
 use std::sync::atomic::{Ordering, AtomicBool};
@@ -18,6 +18,9 @@ use libc::strlen;
 mod shader;
 use shader::*;
 
+use super::err::{EngineError, EngineErrorTrait};
+
+
 static mut GLFW: MaybeUninit<glfw::Glfw> = MaybeUninit::uninit();
 
 static GL_INITIALIZED: AtomicBool = AtomicBool::new(false);
@@ -27,6 +30,15 @@ const VERT_SHADER: &'static str = include_str!("shaders/terrain_shader.vert");
 const FRAG_SHADER: &'static str = include_str!("shaders/terrain_shader.frag");
 
 pub type TerrainVertex = [f32; 6];
+
+impl EngineErrorTrait for glfw::InitError {
+    fn get_error_message(&self) -> &str {
+        match &self {
+            glfw::InitError::AlreadyInitialized => "AlreadyInitialized",
+            glfw::InitError::Internal => "Internal",
+        }
+    }
+}
 
 pub struct Graphics {
     window: glfw::Window,
@@ -39,21 +51,33 @@ pub struct Graphics {
     terrain_vao: u32
 }
 
-fn convert_string<'a>(s: *const u8) -> &'a str {
-    unsafe { std::str::from_utf8_unchecked(std::slice::from_raw_parts(s, strlen(s as *const i8))) }
+fn get_proc_address(window: &glfw::Window, fn_name: *const u8) -> *const c_void {
+    // The fact that I need to do ths is bullshit, but I don't see any way around it.
+    let w = unsafe {&mut *(window as *const glfw::Window as *mut glfw::Window)};
+    let fn_name_slice = std::str::from_utf8(unsafe {std::slice::from_raw_parts(fn_name, strlen(fn_name as *const i8))}).unwrap();
+
+    // I'm pretty sure this function shouldn't atually be mutating anything idk why the library wants a &mut self
+    w.get_proc_address(fn_name_slice)
 }
 
 impl Graphics {
-    pub fn init_gl() {
+    pub fn init_gl() -> Result<(), EngineError> {
         if GL_INITIALIZED.load(Ordering::Relaxed) {
             // Maybe this should panic, I'm not really sure
-            eprintln!("GL Already Initialized!");
-            return;
+            eprintln!();
+            return Err("GL Already Initialized!".into());
+        }
+        
+        let init = glfw::init(glfw::FAIL_ON_ERRORS);
+        if init.is_ok() {
+            unsafe {GLFW.write(init.unwrap())};
+        } else {
+            let err_str = format!("GL Init Error: {:?}", init.err().unwrap());
+            return Err(err_str.into())
         }
     
-        unsafe {GLFW.write(glfw::init(glfw::FAIL_ON_ERRORS).unwrap())};
-    
         GL_INITIALIZED.store(true, Ordering::Relaxed);
+        Ok(())
     }
 
     pub fn gl_initialized() -> bool {
@@ -64,16 +88,23 @@ impl Graphics {
         unsafe { glGetInteger64v(GL_TIMESTAMP, time) };
     }
 
-    pub fn create_window() -> Graphics {
+    pub fn create_window() -> Result<Graphics, EngineError> {
         if !Graphics::gl_initialized() {
-            panic!("GL not initialized!");
+            return Err("GL not initialized!".into());
         }
 
         let glfw = unsafe {GLFW.assume_init_mut()};
      
         // Create a windowed mode window and its OpenGL context
-        let (mut window, events) = glfw.create_window(800, 600, "Wob", glfw::WindowMode::Windowed)
-            .expect("Failed to create GLFW window.");
+        let (mut window, events) = {
+            let op = glfw.create_window(800, 600, "Wob", glfw::WindowMode::Windowed);
+
+            if op.is_none() {
+                return Err("Failed to create GLFW window.".into());
+            }
+
+            op.unwrap()
+        };
     
         // Make the window's context current
         window.make_current();
@@ -90,10 +121,10 @@ impl Graphics {
         };
     
         // The get_proc_address shouldn't be mutable as far as I can tell, but for some reason it is. There's an unsafe block anyway so why not.
-        let win_ptr = &mut gfx.window as *mut glfw::Window;
+        //let win_ptr = &mut gfx.window as *mut glfw::Window;
         // Do gl stuff
         unsafe {
-            load_global_gl(&|fn_name: *const u8| (*win_ptr).get_proc_address(convert_string(fn_name)));
+            load_global_gl(&|fn_name| get_proc_address(&gfx.window, fn_name));
             gfx.terrain_shader = Shader::load_shader_program("Terrain Shader", VERT_SHADER, FRAG_SHADER);
     
             glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -103,7 +134,7 @@ impl Graphics {
             let mut vao: u32 = 0;
             glGenVertexArrays(1, &mut vao);
             if (vao as i32) < 0 {
-                panic!("Error creaing VAO!");
+                return Err("Error creaing VAO!".into());
             }
             
             glBindVertexArray(vao);
@@ -111,7 +142,7 @@ impl Graphics {
             let mut vbo: u32 = 0;
             glGenBuffers(1, &mut vbo);
             if (vbo as i32) < 0 {
-                panic!("Error creaing VBO!");
+                return Err("Error creaing VBO!".into());
             }
             
             gfx.terrain_vao = vao;
@@ -145,7 +176,7 @@ impl Graphics {
             let mut vao: u32 = 0;
             glGenVertexArrays(1, &mut vao);
             if (vao as i32) < 0 {
-                panic!("Error creaing VAO!");
+                return Err("Error creaing VAO!".into());
             }
             
             glBindVertexArray(vao);
@@ -153,7 +184,7 @@ impl Graphics {
             let mut vbo: u32 = 0;
             glGenBuffers(1, &mut vbo);
             if (vbo as i32) < 0 {
-                panic!("Error creaing VBO!");
+                return Err("Error creaing VBO!".into());
             }
     
             gfx.sprite_vao = vao;
@@ -187,7 +218,7 @@ impl Graphics {
             glBindVertexArray(0);
         }
     
-        gfx
+        Ok(gfx)
     }
     
     pub fn buffer_verticies(&mut self, verticies: &[TerrainVertex]) {
