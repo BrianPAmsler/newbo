@@ -41,6 +41,8 @@ impl Engine {
 
         Graphics::get_gl_time(&mut last_tick);
         last_fixed_tick = last_tick;
+        
+        let mut should_close = false;
 
         // Loop until the user closes the window
         while self.gfx.window_alive() {
@@ -55,9 +57,10 @@ impl Engine {
                     _ => {},
                 }
             }
-
+            
             if should_close {
                 self.gfx.close_window();
+                break;
             }
 
             // Game tick
