@@ -6,18 +6,22 @@ mod game_engine;
 use game_engine::*;
 
 fn main() {
-    let mut v1 = Vector3::new(0.0, 0.0, 0.0);
-    let v2 = v1;
+    let root = GameObject::create_empty("Root Object", None);
 
-    println!("v1: {}", v1);
-    println!("v2: {}", v2);
+    let mut a = GameObject::create_empty("A", Some(root.share()));
+    let b = GameObject::create_empty("B", Some(root.share()));
+    let c = GameObject::create_empty("C", Some(root.share()));
 
-    let mut o = GameObject::create_empty("Test", None);
-    println!("pos: {}", o.get_pos());
+    for obj in root.get_childeren() {
+        println!("Child: {}", obj);
+    }
 
-    v1.x = 5.0;
-    o.set_pos(v1);
-    println!("new pos: {}", o.get_pos());
+    a.set_parent(None);
+    println!();
+
+    for obj in root.get_childeren() {
+        println!("Child: {}", obj);
+    }
 
     println!("Initializing OpenGL...");
     let mut engine = Engine::init_engine().unwrap();
