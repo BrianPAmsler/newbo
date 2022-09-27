@@ -1,9 +1,9 @@
 mod graphics;
-mod game_object;
+pub mod game_object;
 mod vectors;
 mod err;
 
-pub use game_object::*;
+use game_object::*;
 use glfw::{Key, Action};
 pub use vectors::*;
 
@@ -17,6 +17,7 @@ pub struct Engine {
     running: bool,
     fixed_tick_duration: i64,
     gfx: Graphics,
+    root_object: GameObject,
     offset1: f32,
     offset2: f32
 }
@@ -40,7 +41,7 @@ impl Engine {
         
         gfx.buffer_verticies(&VERTICES);
 
-        Ok(Engine { running: false, fixed_tick_duration: 1000000000i64 / 60, gfx: gfx, offset1: 0.0, offset2: 0.0 })
+        Ok(Engine { running: false, fixed_tick_duration: 1000000000i64 / 60, gfx: gfx, root_object: GameObject::create_empty("root", None), offset1: 0.0, offset2: 0.0 })
     }
 
     pub fn start_game_loop(&mut self) -> Result<(), EngineError> {
@@ -101,10 +102,12 @@ impl Engine {
         Ok(())
     }
 
-    // Default value is 60 tps, so this may never need to be used.
-    #[allow(dead_code)]
     pub fn set_fixed_tick_rate(&mut self, tickrate:  u32) {
         self.fixed_tick_duration = 1000000000i64 / tickrate as i64;
+    }
+
+    pub fn get_root_object(&self) -> GameObject {
+        self.root_object.share()
     }
 
     fn game_tick(&mut self, delta_time: f32) {
@@ -113,5 +116,10 @@ impl Engine {
 
     fn fixed_game_tick(&mut self, delta_time: f32) {
         self.offset2 -= 0.1 * delta_time;
+
+        let stuff = self.root_object.get_all_children();
+        for obj in stuff {
+            obj.func_for_components(&|c| c.update(delta_time));
+        }
     }
 }

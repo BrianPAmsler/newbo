@@ -42,3 +42,9 @@ impl From<(f32, f32, f32)> for Vector3 {
         Self { x: val.0, y: val.1, z: val.2 }
     }
 }
+
+impl From<(i32, i32, i32)> for Vector3 {
+    fn from(val : (i32, i32, i32)) -> Self {
+        Self { x: val.0 as f32, y: val.1 as f32, z: val.2 as f32 }
+    }
+}

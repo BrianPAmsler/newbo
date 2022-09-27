@@ -1,15 +1,9 @@
-use std::{rc::Rc, cell::RefCell, collections::VecDeque};
+use std::{rc::Rc, cell::RefCell, collections::VecDeque, borrow::Borrow};
+pub mod components;
+
+use components::Component;
 
 use super::Vector3;
-
-#[allow(unused_variables)]
-pub trait Component {
-    fn update(&self, delta_time: f32) {}
-
-    fn render(&self, delta_time: f32) {}
-
-    fn share(&self) -> Box<dyn Component>;
-}
 
 struct _GameObject {
     name: String,
@@ -45,7 +39,7 @@ impl GameObject {
     pub fn create_empty(name: &str, parent: Option<GameObject>) -> GameObject {
         let newobj = GameObject { obj: Rc::new(RefCell::new(_GameObject {
             name: name.to_owned(),
-            pos: (0.0, 0.0, 0.0).into(),
+            pos: (0, 0, 0).into(),
             components: Vec::new(),
             children: Vec::new(),
             parent: None 
@@ -60,7 +54,7 @@ impl GameObject {
         self.obj.as_ref().borrow().pos
     }
 
-    pub fn set_pos(&mut self, pos: Vector3) {
+    pub fn set_pos(&self, pos: Vector3) {
         self.obj.borrow_mut().pos = pos;
     }
 
@@ -76,8 +70,14 @@ impl GameObject {
         }
     }
 
-    pub fn add_component(&mut self, component: &dyn Component) {
-        self.obj.borrow_mut().components.push(component.share());
+    pub fn add_component(&self, component: Box<dyn Component>) {
+        self.obj.borrow_mut().components.push(component);
+    }
+
+    pub(in crate::game_engine) fn func_for_components(&self, func: &dyn Fn(&dyn Component)) {
+        for component in &self.obj.as_ref().borrow().components {
+            func(component.as_ref());
+        }
     }
 
     pub fn get_parent(&self) -> Option<GameObject> {
@@ -136,11 +136,11 @@ impl GameObject {
         v
     }
 
-    fn add_child(&mut self, child: GameObject) {
+    fn add_child(&self, child: GameObject) {
         self.obj.borrow_mut().children.push(child.share());
     }
 
-    fn remove_child(&mut self, child: &GameObject) {
+    fn remove_child(&self, child: &GameObject) {
         let mut idx = -1;
         for (i, c) in self.obj.borrow_mut().children.iter().enumerate() {
             if Rc::ptr_eq(&c.obj, &child.obj) {
