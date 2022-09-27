@@ -8,7 +8,7 @@ pub trait Component {
 
     fn render(&self, delta_time: f32) {}
 
-    fn clone(&self) -> Box<dyn Component>;
+    fn share(&self) -> Box<dyn Component>;
 }
 
 struct _GameObject {
@@ -19,14 +19,25 @@ struct _GameObject {
     parent: Option<GameObject>
 }
 
-#[derive(Clone)]
 pub struct GameObject {
     obj: Rc<RefCell<_GameObject>>
+}
+
+impl GameObject {
+    pub fn share(&self) -> GameObject {
+        GameObject { obj: self.obj.clone() }
+    }
 }
 
 impl std::fmt::Display for GameObject {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "GameObject{{\"{}\"}}", self.obj.as_ref().borrow().name)
+    }
+}
+
+impl AsRef<GameObject> for GameObject {
+    fn as_ref(&self) -> &GameObject {
+        self
     }
 }
 
@@ -66,28 +77,51 @@ impl GameObject {
     }
 
     pub fn add_component(&mut self, component: &dyn Component) {
-        self.obj.borrow_mut().components.push(component.clone());
+        self.obj.borrow_mut().components.push(component.share());
     }
 
     pub fn get_parent(&self) -> Option<GameObject> {
         match &self.obj.as_ref().borrow().parent {
-            Some(parent) => Some(GameObject { obj: parent.obj.clone() }),
+            Some(parent) => Some(parent.share()),
             None => None
         }
     }
 
     pub fn set_parent(&mut self, parent: Option<GameObject>) {
+        {
+            let old_parent = &self.obj.as_ref().borrow().parent;
+
+            match old_parent {
+                Some(p) => p.share().remove_child(self),
+                None => ()
+            }
+        }
+
         match parent {
-            Some(p) => self.obj.borrow_mut().parent = Some(GameObject { obj: p.obj.clone() }),
+            Some(mut p) => {
+                p.add_child(self.share());
+                self.obj.borrow_mut().parent = Some(p);
+            },
             None => self.obj.borrow_mut().parent = None
         }
     }
 
-    fn add_child(&mut self, child: GameObject) {
-        self.obj.borrow_mut().children.push(GameObject { obj: child.obj.clone() });
+    pub fn get_childeren(&self) -> Vec<GameObject> {
+        let mut v = Vec::new();
+        v.reserve(self.obj.as_ref().borrow().children.len());
+
+        for c in &self.obj.as_ref().borrow().children {
+            v.push(c.share());
+        }
+
+        v
     }
 
-    fn remove_child(&mut self, child: GameObject) -> bool {
+    fn add_child(&mut self, child: GameObject) {
+        self.obj.borrow_mut().children.push(child.share());
+    }
+
+    fn remove_child(&mut self, child: &GameObject) {
         let mut idx = -1;
         for (i, c) in self.obj.borrow_mut().children.iter().enumerate() {
             if Rc::ptr_eq(&c.obj, &child.obj) {
@@ -96,11 +130,10 @@ impl GameObject {
             }
         }
 
-        if idx > 0 {
-            self.obj.borrow_mut().children.remove(idx as usize);
-            return true;
+        if idx == 1 {
+            panic!("Child does not exist! This shouldn't happen!");
         }
 
-        return false;
+        self.obj.borrow_mut().children.remove(idx as usize);
     }
 }
