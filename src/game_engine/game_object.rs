@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell};
+use std::{rc::Rc, cell::RefCell, collections::VecDeque};
 
 use super::Vector3;
 
@@ -43,7 +43,7 @@ impl AsRef<GameObject> for GameObject {
 
 impl GameObject {
     pub fn create_empty(name: &str, parent: Option<GameObject>) -> GameObject {
-        let mut newobj = GameObject { obj: Rc::new(RefCell::new(_GameObject {
+        let newobj = GameObject { obj: Rc::new(RefCell::new(_GameObject {
             name: name.to_owned(),
             pos: (0.0, 0.0, 0.0).into(),
             components: Vec::new(),
@@ -87,7 +87,7 @@ impl GameObject {
         }
     }
 
-    pub fn set_parent(&mut self, parent: Option<GameObject>) {
+    pub fn set_parent(&self, parent: Option<GameObject>) {
         {
             let old_parent = &self.obj.as_ref().borrow().parent;
 
@@ -106,12 +106,31 @@ impl GameObject {
         }
     }
 
-    pub fn get_childeren(&self) -> Vec<GameObject> {
+    pub fn get_children(&self) -> Vec<GameObject> {
         let mut v = Vec::new();
         v.reserve(self.obj.as_ref().borrow().children.len());
 
         for c in &self.obj.as_ref().borrow().children {
             v.push(c.share());
+        }
+
+        v
+    }
+
+    pub fn get_all_children(&self) -> Vec<GameObject> {
+        let mut v = Vec::new();
+
+        // BFS
+        let mut q = VecDeque::new();
+        q.push_back(self.share());
+        while q.len() > 0 {
+            let current = q.pop_front().unwrap();
+            v.reserve(current.obj.as_ref().borrow().children.len());
+
+            for c in &current.obj.as_ref().borrow().children {
+                q.push_back(c.share());
+                v.push(c.share())
+            }
         }
 
         v

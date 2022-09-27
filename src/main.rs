@@ -8,18 +8,26 @@ use game_engine::*;
 fn main() {
     let root = GameObject::create_empty("Root Object", None);
 
-    let mut a = GameObject::create_empty("A", Some(root.share()));
+    let a = GameObject::create_empty("A", Some(root.share()));
     let b = GameObject::create_empty("B", Some(root.share()));
     let c = GameObject::create_empty("C", Some(root.share()));
+    let d = GameObject::create_empty("D", Some(c.share()));
+    let e = GameObject::create_empty("E", Some(d.share()));
+    let f = GameObject::create_empty("F", Some(c.share()));
 
-    for obj in root.get_childeren() {
+    for obj in root.get_children() {
         println!("Child: {}", obj);
     }
 
     a.set_parent(None);
     println!();
 
-    for obj in root.get_childeren() {
+    for obj in root.get_children() {
+        println!("Child: {}", obj);
+    }
+    println!();
+
+    for obj in root.get_all_children() {
         println!("Child: {}", obj);
     }
 
