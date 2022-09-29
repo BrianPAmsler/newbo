@@ -54,6 +54,8 @@ impl Engine {
         let mut last_tick = Graphics::get_glfw_time();
         let mut last_fixed_tick: f64;
 
+        let mut fixed_tick_overflow = 0.0;
+
         last_fixed_tick = last_tick;
         
         let mut should_close = false;
@@ -82,7 +84,11 @@ impl Engine {
             self.game_tick(current_time - last_tick);
             last_tick = current_time;
 
-            if current_time - last_fixed_tick >= self.fixed_tick_duration {
+            let fixed_diff = current_time - last_fixed_tick - self.fixed_tick_duration;
+
+            // Add overflow to adjust for errors in timing
+            if fixed_diff + fixed_tick_overflow >= 0.0 {
+                fixed_tick_overflow = f64::max(0.0, fixed_diff * 2.0);
                 self.fixed_game_tick(current_time - last_fixed_tick);
                 last_fixed_tick = current_time;
             }
@@ -108,7 +114,7 @@ impl Engine {
     }
 
     fn game_tick(&mut self, delta_time: f64) {
-       self.offset1 += 0.1 * delta_time as f32;
+       self.offset1 += 0.01 * delta_time as f32;
 
        let stuff = self.root_object.get_all_children();
        for obj in stuff {
@@ -117,7 +123,7 @@ impl Engine {
     }
 
     fn fixed_game_tick(&mut self, delta_time: f64) {
-        self.offset2 -= 0.1 * delta_time as f32;
+        self.offset2 -= 0.01 * delta_time as f32;
 
         let stuff = self.root_object.get_all_children();
         for obj in stuff {
