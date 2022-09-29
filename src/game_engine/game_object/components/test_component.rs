@@ -13,7 +13,7 @@ pub struct TestComponent {
 impl Component for TestComponent {
     fn update(&mut self, _delta_time: f64, _owner: &GameObject) {
         self.count += 1;
-        let mut current_tick = game_engine::Graphics::get_gl_time();
+        let mut current_tick = game_engine::Graphics::get_glfw_time();
 
         let delta = current_tick - self.last_update;
 
@@ -28,7 +28,7 @@ impl Component for TestComponent {
 
     fn fixed_update(&mut self, _delta_time: f64, _owner: &GameObject) {
         self.fixed_count += 1;
-        let mut current_tick = game_engine::Graphics::get_gl_time();
+        let mut current_tick = game_engine::Graphics::get_glfw_time();
 
         let delta = current_tick - self.last_fixed_update;
 

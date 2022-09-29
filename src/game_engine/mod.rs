@@ -51,7 +51,7 @@ impl Engine {
 
         self.running = true;
 
-        let mut last_tick = Graphics::get_gl_time();
+        let mut last_tick = Graphics::get_glfw_time();
         let mut last_fixed_tick: f64;
 
         last_fixed_tick = last_tick;
@@ -77,7 +77,7 @@ impl Engine {
             }
 
             // Game tick
-            let mut current_time = Graphics::get_gl_time();
+            let mut current_time = Graphics::get_glfw_time();
 
             self.game_tick(current_time - last_tick);
             last_tick = current_time;
