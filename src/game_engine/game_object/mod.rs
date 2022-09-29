@@ -58,26 +58,26 @@ impl GameObject {
         self.obj.borrow_mut().pos = pos;
     }
 
-    pub fn update(&self, delta_time: f32) {
-        for cmp in &self.obj.as_ref().borrow().components[..] {
-            cmp.update(delta_time);
+    pub(in crate::game_engine) fn update(&self, delta_time: f32) {
+        for cmp in &mut self.obj.as_ref().borrow_mut().components {
+            cmp.update(delta_time, &self);
         }
     }
 
-    pub fn render(&self, delta_time: f32) {
-        for cmp in &self.obj.as_ref().borrow().components[..] {
-            cmp.render(delta_time);
+    pub(in crate::game_engine) fn fixed_update(&self, delta_time: f32) {
+        for cmp in &mut self.obj.as_ref().borrow_mut ().components[..] {
+            cmp.fixed_update(delta_time, &self);
+        }
+    }
+
+    pub(in crate::game_engine) fn render(&self, delta_time: f32) {
+        for cmp in &mut self.obj.as_ref().borrow_mut().components[..] {
+            cmp.render(delta_time, &self);
         }
     }
 
     pub fn add_component(&self, component: Box<dyn Component>) {
         self.obj.borrow_mut().components.push(component);
-    }
-
-    pub(in crate::game_engine) fn func_for_components(&self, func: &dyn Fn(&dyn Component)) {
-        for component in &self.obj.as_ref().borrow().components {
-            func(component.as_ref());
-        }
     }
 
     pub fn get_parent(&self) -> Option<GameObject> {

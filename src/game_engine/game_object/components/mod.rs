@@ -1,9 +1,10 @@
 mod test_component;
 pub use test_component::TestComponent;
 
-#[allow(unused_variables)]
-pub trait Component {
-    fn update(&self, delta_time: f32) {}
+use super::GameObject;
 
-    fn render(&self, delta_time: f32) {}
+pub trait Component {
+    fn update(&mut self, _delta_time: f32, _owner: &GameObject) {}
+    fn fixed_update(&mut self, _delta_time: f32, _owner: &GameObject) {}
+    fn render(&mut self, _delta_time: f32, _owner: &GameObject) {}
 }

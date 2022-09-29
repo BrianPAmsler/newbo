@@ -7,6 +7,8 @@ use game_engine::*;
 use game_engine::game_object::components::*;
 use game_engine::game_object::GameObject;
 
+extern crate rand;
+
 fn main() {
     println!("Initializing Engine...");
     let mut engine = Engine::init_engine().unwrap();
@@ -14,33 +16,22 @@ fn main() {
 
     let root = engine.get_root_object();
 
-    let a = GameObject::create_empty("A", Some(root.share()));
-    let b = GameObject::create_empty("B", Some(root.share()));
-    let c = GameObject::create_empty("C", Some(root.share()));
-    let d = GameObject::create_empty("D", Some(c.share()));
-    let e = GameObject::create_empty("E", Some(d.share()));
-    let f = GameObject::create_empty("F", Some(c.share()));
+    let n = 1000;
 
-    let comp_f = TestComponent { msg: "test f".to_owned() };
-    let comp_d = TestComponent{ msg: "test d".to_owned() };
+    let mut objs = Vec::new();
+    objs.push(root.share());
+    objs.reserve(n);
 
-    f.add_component(Box::new(comp_f));
-    d.add_component(Box::new(comp_d));
+    for i in 0..n {
+        let choice = rand::random::<usize>() % objs.len();
 
-    for obj in root.get_children() {
-        println!("Child: {}", obj);
-    }
+        let s = format!("test {}", i);
 
-    a.set_parent(None);
-    println!();
+        objs.push(GameObject::create_empty(&s[..], Some(objs[choice].share())));
 
-    for obj in root.get_children() {
-        println!("Child: {}", obj);
-    }
-    println!();
-
-    for obj in root.get_all_children() {
-        println!("Child: {}", obj);
+        if i == n - 1 {
+            objs[i].add_component(Box::new(TestComponent::default()));
+        }
     }
 
     println!("Starting Game Loop...");
