@@ -12,6 +12,7 @@ extern crate rand;
 fn main() {
     println!("Initializing Engine...");
     let mut engine = Engine::init_engine().unwrap();
+    engine.set_fixed_tick_rate(60.0);
     println!("Engine Initialized.");
 
     let root = engine.get_root_object();

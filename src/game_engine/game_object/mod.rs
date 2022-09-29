@@ -58,19 +58,19 @@ impl GameObject {
         self.obj.borrow_mut().pos = pos;
     }
 
-    pub(in crate::game_engine) fn update(&self, delta_time: f32) {
+    pub(in crate::game_engine) fn update(&self, delta_time: f64) {
         for cmp in &mut self.obj.as_ref().borrow_mut().components {
             cmp.update(delta_time, &self);
         }
     }
 
-    pub(in crate::game_engine) fn fixed_update(&self, delta_time: f32) {
+    pub(in crate::game_engine) fn fixed_update(&self, delta_time: f64) {
         for cmp in &mut self.obj.as_ref().borrow_mut ().components[..] {
             cmp.fixed_update(delta_time, &self);
         }
     }
 
-    pub(in crate::game_engine) fn render(&self, delta_time: f32) {
+    pub(in crate::game_engine) fn render(&self, delta_time: f64) {
         for cmp in &mut self.obj.as_ref().borrow_mut().components[..] {
             cmp.render(delta_time, &self);
         }

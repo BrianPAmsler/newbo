@@ -83,8 +83,10 @@ impl Graphics {
         GL_INITIALIZED.load(Ordering::Relaxed)
     }
 
-    pub fn get_gl_time(time: &mut i64) {
-        unsafe { glGetInteger64v(GL_TIMESTAMP, time) };
+    pub fn get_gl_time() -> f64 {
+
+        let glfw = unsafe { GLFW.assume_init_ref() };
+        glfw.get_time()
     }
 
     pub fn create_window() -> Result<Graphics, EngineError> {
