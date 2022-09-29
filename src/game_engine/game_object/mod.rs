@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, collections::VecDeque, borrow::Borrow};
+use std::{rc::Rc, cell::RefCell, collections::VecDeque};
 pub mod components;
 
 use components::Component;
@@ -98,7 +98,7 @@ impl GameObject {
         }
 
         match parent {
-            Some(mut p) => {
+            Some(p) => {
                 p.add_child(self.share());
                 self.obj.borrow_mut().parent = Some(p);
             },

@@ -77,7 +77,7 @@ impl Engine {
             }
 
             // Game tick
-            let mut current_time = Graphics::get_glfw_time();
+            let current_time = Graphics::get_glfw_time();
 
             self.game_tick(current_time - last_tick);
             last_tick = current_time;
