@@ -10,6 +10,8 @@ use super::{Vector3, Engine};
 struct _GameObject {
     name: String,
     pos: Vector3,
+    rot: Vector3,
+    scale: Vector3,
     components: Vec<Box<dyn Component>>,
     children: Vec<GameObject>,
     parent: Option<GameObject>
@@ -41,7 +43,9 @@ impl GameObject {
     pub fn create_empty(name: &str, parent: Option<GameObject>) -> GameObject {
         let newobj = GameObject { obj: Rc::new(RefCell::new(_GameObject {
             name: name.to_owned(),
-            pos: (0, 0, 0).into(),
+            pos: Vector3::ZERO,
+            rot: Vector3::ZERO,
+            scale: Vector3::ONE,
             components: Vec::new(),
             children: Vec::new(),
             parent: None 
