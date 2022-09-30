@@ -3,7 +3,9 @@ pub mod components;
 
 use components::Component;
 
-use super::Vector3;
+use self::components::TickInfo;
+
+use super::{Vector3, Engine};
 
 struct _GameObject {
     name: String,
@@ -58,21 +60,27 @@ impl GameObject {
         self.obj.borrow_mut().pos = pos;
     }
 
-    pub(in crate::game_engine) fn update(&self, delta_time: f64) {
+    pub(in crate::game_engine) fn init(&self, engine: &Engine) {
         for cmp in &mut self.obj.as_ref().borrow_mut().components {
-            cmp.update(delta_time, &self);
+            cmp.init(engine, &self);
         }
     }
 
-    pub(in crate::game_engine) fn fixed_update(&self, delta_time: f64) {
+    pub(in crate::game_engine) fn update(&self, delta_time: f64, engine: &Engine) {
+        for cmp in &mut self.obj.as_ref().borrow_mut().components {
+            cmp.update(TickInfo { delta_time, engine }, &self);
+        }
+    }
+
+    pub(in crate::game_engine) fn fixed_update(&self, delta_time: f64, engine: &Engine) {
         for cmp in &mut self.obj.as_ref().borrow_mut ().components[..] {
-            cmp.fixed_update(delta_time, &self);
+            cmp.fixed_update(TickInfo { delta_time, engine }, &self);
         }
     }
 
-    pub(in crate::game_engine) fn render(&self, delta_time: f64) {
+    pub(in crate::game_engine) fn render(&self, delta_time: f64, engine: &Engine) {
         for cmp in &mut self.obj.as_ref().borrow_mut().components[..] {
-            cmp.render(delta_time, &self);
+            cmp.render(TickInfo { delta_time, engine }, &self);
         }
     }
 

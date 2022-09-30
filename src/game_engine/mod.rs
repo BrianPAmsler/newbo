@@ -113,12 +113,23 @@ impl Engine {
         self.root_object.share()
     }
 
+    pub fn get_gfx(&self) -> &Graphics {
+        &self.gfx
+    }
+
+    fn init(&mut self) {
+        let stuff = self.root_object.get_all_children();
+        for obj in stuff {
+            obj.init(&self);
+        }
+    }
+
     fn game_tick(&mut self, delta_time: f64) {
        self.offset1 += 0.01 * delta_time as f32;
 
        let stuff = self.root_object.get_all_children();
        for obj in stuff {
-           obj.update(delta_time);
+           obj.update(delta_time, &self);
        }
     }
 
@@ -127,7 +138,7 @@ impl Engine {
 
         let stuff = self.root_object.get_all_children();
         for obj in stuff {
-            obj.fixed_update(delta_time);
+            obj.fixed_update(delta_time, &self);
         }
     }
 }
