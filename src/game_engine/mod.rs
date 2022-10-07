@@ -1,11 +1,13 @@
 mod graphics;
 pub mod game_object;
+mod n_array;
 mod vectors;
 mod err;
 
 use game_object::*;
 use glfw::{Key, Action};
 pub use vectors::*;
+pub use n_array::NArray;
 
 use graphics::*;
 

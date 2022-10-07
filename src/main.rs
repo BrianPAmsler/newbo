@@ -9,6 +9,10 @@ use game_engine::game_object::GameObject;
 
 extern crate rand;
 
+struct Test {
+    pub n: i32
+}
+
 fn main() {
     println!("Initializing Engine...");
     let mut engine = Engine::init_engine().unwrap();
