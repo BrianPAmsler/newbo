@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, collections::VecDeque};
+use std::{rc::Rc, cell::{RefCell, Ref}, collections::VecDeque};
 pub mod components;
 
 use components::Component;
@@ -166,5 +166,21 @@ impl GameObject {
         }
 
         self.obj.borrow_mut().children.remove(idx as usize);
+    }
+
+    fn borrow_component<C: Component>(&self) -> Option<Ref<C>> {
+        let b = self.obj.borrow();
+        let out = Ref::filter_map(b, |rf| {
+            for c in &rf.components {
+                let r = c.downcast_ref();
+                if r.is_some() {
+                    return r;
+                }
+            }
+
+            None
+        });
+
+        out.ok()
     }
 }

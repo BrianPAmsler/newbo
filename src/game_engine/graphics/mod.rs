@@ -29,7 +29,31 @@ static GL_INITIALIZED: AtomicBool = AtomicBool::new(false);
 const VERT_SHADER: &'static str = include_str!("shaders/terrain_shader.vert");
 const FRAG_SHADER: &'static str = include_str!("shaders/terrain_shader.frag");
 
-pub type TerrainVertex = [f32; 6];
+pub struct TerrainVertex {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub r: f32,
+    pub g: f32,
+    pub b: f32
+}
+
+pub struct SpriteVertex {
+    pub x: f32,
+    pub y: f32, 
+    pub z: f32,
+    pub u: f32,
+    pub v: f32
+}
+
+const SPRITE_VERTICIES: [SpriteVertex; 6] = [
+    SpriteVertex { x: -1.0, y: -1.0, z: 0.0, u: 0.0, v: 0.0 }, // Bottom left
+    SpriteVertex { x:  1.0, y: -1.0, z: 0.0, u: 1.0, v: 0.0 }, // Bottom right
+    SpriteVertex { x:  1.0, y:  1.0, z: 0.0, u: 1.0, v: 1.0 }, // Top right
+    SpriteVertex { x: -1.0, y:  1.0, z: 0.0, u: 0.0, v: 1.0 }, // Top left
+    SpriteVertex { x: -1.0, y: -1.0, z: 0.0, u: 0.0, v: 0.0 }, // Bottom left
+    SpriteVertex { x:  1.0, y:  1.0, z: 0.0, u: 1.0, v: 1.0 }, // Top right
+];
 
 impl EngineErrorTrait for glfw::InitError {
     fn get_error_message(&self) -> &str {
@@ -120,9 +144,7 @@ impl Graphics {
             terrain_vbo: 0,
             terrain_vao: 0
         };
-    
-        // The get_proc_address shouldn't be mutable as far as I can tell, but for some reason it is. There's an unsafe block anyway so why not.
-        //let win_ptr = &mut gfx.window as *mut glfw::Window;
+
         // Do gl stuff
         unsafe {
             load_global_gl(&|fn_name| get_proc_address(&gfx.window, fn_name));
