@@ -45,7 +45,7 @@ impl Engine {
             result.unwrap()
         };
         
-        gfx.buffer_verticies(&VERTICES);
+        gfx.buffer_terrain_verticies(&VERTICES);
 
         Ok(Engine { running: false, fixed_tick_duration: 1.0 / 60.0, gfx: gfx, root_object: GameObject::create_empty("root", None), offset1: 0.0, offset2: 0.0 })
     }

@@ -4,7 +4,10 @@ use glfw::{FlushedMessages, WindowEvent, Context};
 
 use gl33::global_loader::*;
 use gl33::gl_enumerations::*;
+use missing_gl_enums::*;
 
+use std::fs::File;
+use std::io::BufReader;
 use std::mem::MaybeUninit;
 use std::os::raw::c_void;
 use std::sync::mpsc::Receiver;
@@ -20,6 +23,7 @@ use shader::*;
 
 use super::err::{EngineError, EngineErrorTrait};
 
+mod missing_gl_enums;
 
 static mut GLFW: MaybeUninit<glfw::Glfw> = MaybeUninit::uninit();
 
@@ -28,6 +32,9 @@ static GL_INITIALIZED: AtomicBool = AtomicBool::new(false);
 // Include shaders
 const VERT_SHADER: &'static str = include_str!("shaders/terrain_shader.vert");
 const FRAG_SHADER: &'static str = include_str!("shaders/terrain_shader.frag");
+
+const SPRITE_VERT_SHADER: &'static str = include_str!("shaders/sprite_shader.vert");
+const SPRITE_FRAG_SHADER: &'static str = include_str!("shaders/sprite_shader.frag");
 
 pub struct TerrainVertex {
     pub x: f32,
@@ -46,13 +53,39 @@ pub struct SpriteVertex {
     pub v: f32
 }
 
+pub struct SpriteInfo {
+    pub u: f32,
+    pub v: f32,
+    pub w: f32,
+    pub h: f32
+}
+
+const TEST_SPRITE_INFOS: [SpriteInfo; 16] = [
+    SpriteInfo { u: 0.00, v: 0.00, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.25, v: 0.00, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.50, v: 0.00, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.75, v: 0.00, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.00, v: 0.25, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.25, v: 0.25, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.50, v: 0.25, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.75, v: 0.25, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.00, v: 0.50, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.25, v: 0.50, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.50, v: 0.50, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.75, v: 0.50, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.00, v: 0.75, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.25, v: 0.75, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.50, v: 0.75, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.75, v: 0.75, w: 0.25, h: 0.25},
+];
+
 const SPRITE_VERTICIES: [SpriteVertex; 6] = [
-    SpriteVertex { x: -1.0, y: -1.0, z: 0.0, u: 0.0, v: 0.0 }, // Bottom left
-    SpriteVertex { x:  1.0, y: -1.0, z: 0.0, u: 1.0, v: 0.0 }, // Bottom right
-    SpriteVertex { x:  1.0, y:  1.0, z: 0.0, u: 1.0, v: 1.0 }, // Top right
-    SpriteVertex { x: -1.0, y:  1.0, z: 0.0, u: 0.0, v: 1.0 }, // Top left
-    SpriteVertex { x: -1.0, y: -1.0, z: 0.0, u: 0.0, v: 0.0 }, // Bottom left
-    SpriteVertex { x:  1.0, y:  1.0, z: 0.0, u: 1.0, v: 1.0 }, // Top right
+    SpriteVertex { x: -1.0, y: -1.0, z: 0.0, u: 0.0, v: 1.0 }, // Bottom left
+    SpriteVertex { x:  1.0, y: -1.0, z: 0.0, u: 1.0, v: 1.0 }, // Bottom right
+    SpriteVertex { x:  1.0, y:  1.0, z: 0.0, u: 1.0, v: 0.0 }, // Top right
+    SpriteVertex { x: -1.0, y:  1.0, z: 0.0, u: 0.0, v: 0.0 }, // Top left
+    SpriteVertex { x: -1.0, y: -1.0, z: 0.0, u: 0.0, v: 1.0 }, // Bottom left
+    SpriteVertex { x:  1.0, y:  1.0, z: 0.0, u: 1.0, v: 0.0 }, // Top right
 ];
 
 impl EngineErrorTrait for glfw::InitError {
@@ -72,7 +105,7 @@ pub struct Graphics {
     sprite_vbo: u32,
     sprite_vao: u32,
     terrain_vbo: u32,
-    terrain_vao: u32
+    terrain_vao: u32,
 }
 
 fn get_proc_address(window: &glfw::Window, fn_name: *const u8) -> *const c_void {
@@ -136,7 +169,7 @@ impl Graphics {
         window.set_key_polling(true);
 
         let mut gfx = Graphics {window: window,
-            events: events,
+            events,
             terrain_shader: Shader::null_shader(),
             sprite_shader: Shader::null_shader(),
             sprite_vbo: 0,
@@ -148,11 +181,11 @@ impl Graphics {
         // Do gl stuff
         unsafe {
             load_global_gl(&|fn_name| get_proc_address(&gfx.window, fn_name));
-            gfx.terrain_shader = Shader::load_shader_program("Terrain Shader", VERT_SHADER, FRAG_SHADER);
+            gfx.terrain_shader = Shader::load_shader_program("Terrain Shader", VERT_SHADER, FRAG_SHADER, &[]);
     
             glClearColor(0.2, 0.3, 0.3, 1.0);
     
-            gfx.terrain_shader = Shader::load_shader_program("Default Shader", VERT_SHADER, FRAG_SHADER);
+            gfx.sprite_shader = Shader::load_shader_program("Sprite Shader", SPRITE_VERT_SHADER, SPRITE_FRAG_SHADER, &[ShaderArg("$sheet_size", "16"), ShaderArg("$instance_count", "100")]);
     
             let mut vao: u32 = 0;
             glGenVertexArrays(1, &mut vao);
@@ -236,6 +269,31 @@ impl Graphics {
                 12 as *const _,
             );
             glEnableVertexAttribArray(1);
+
+            
+            let loc: i32 = glGetUniformLocation(gfx.sprite_shader.get_program(), b"sprite_info\0" as *const u8);
+        
+            if loc >= 0 {
+                glUniform4fv(loc, 16, TEST_SPRITE_INFOS.as_ptr().cast());
+            }
+            
+            let f = File::open("C:/Users/Brian/Pictures/test_spritesheet.png").unwrap();
+            
+            let tex = gfx.sprite_shader.load_texture(f);
+
+            let loc = glGetUniformLocation(gfx.sprite_shader.get_program(), b"MainTex\0" as *const u8);
+
+            if loc >= 0 {
+                glUniform1i(loc, tex as i32);
+            }
+
+            // Send verticies to gpu
+            glBufferData(
+                GL_ARRAY_BUFFER,
+                (SPRITE_VERTICIES.len() * size_of::<SpriteVertex>()) as isize,
+                SPRITE_VERTICIES.as_ptr().cast(),
+                GL_STATIC_DRAW,
+            );
     
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
@@ -244,7 +302,7 @@ impl Graphics {
         Ok(gfx)
     }
     
-    pub fn buffer_verticies(&mut self, verticies: &[TerrainVertex]) {
+    pub fn buffer_terrain_verticies(&mut self, verticies: &[TerrainVertex]) {
         unsafe {
             glBindVertexArray(self.terrain_vao);
             glBindBuffer(GL_ARRAY_BUFFER, self.terrain_vbo);
@@ -286,6 +344,38 @@ impl Graphics {
             }
         
             glDrawArrays(GL_TRIANGLES, 0, 3);
+
+            glBindVertexArray(self.sprite_vao);
+            glBindBuffer(GL_ARRAY_BUFFER, self.sprite_vbo);
+            
+            let program = self.sprite_shader.get_program();
+            glUseProgram(program);
+            
+            let loc: i32 = glGetUniformLocation(self.sprite_shader.get_program(), b"sprite_info\0" as *const u8);
+        
+            if loc >= 0 {
+                glUniform4fv(loc, 16, TEST_SPRITE_INFOS.as_ptr().cast());
+            }
+
+            let mut sprites = [0.25f32; 400];
+            sprites[0] = -0.5;
+            sprites[1] = 0.0;
+
+            sprites[4] = 0.5;
+            sprites[5] = 0.0;
+            let loc: i32 = glGetUniformLocation(program, b"sprites\0" as *const u8);
+            if loc >= 0 {
+                glUniform4fv(loc, 100, sprites.as_ptr().cast());
+            }
+
+            let mut ids = [0; 100];
+            ids[1] = 2;
+            let loc: i32 = glGetUniformLocation(program, b"sprite_id\0" as *const u8);
+            if loc >= 0 {
+                glUniform1iv(loc, 100, ids.as_ptr().cast());
+            }
+
+            glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 2);
         }
     }
 

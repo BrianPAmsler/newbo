@@ -3,6 +3,9 @@
 
 mod game_engine;
 
+use std::fs::File;
+use std::io::BufReader;
+
 use game_engine::*;
 use game_engine::game_object::components::*;
 use game_engine::game_object::GameObject;
