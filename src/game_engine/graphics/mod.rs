@@ -363,12 +363,12 @@ impl Graphics {
 
             let loc: i32 = glGetUniformLocation(program, b"sprites\0" as *const u8);
             if loc >= 0 {
-                glUniform4fv(loc, 100, self.sprites.as_ptr().cast());
+                glUniform4fv(loc, INSTANCES as i32, self.sprites.as_ptr().cast());
             }
 
             let loc: i32 = glGetUniformLocation(program, b"sprite_id\0" as *const u8);
             if loc >= 0 {
-                glUniform1iv(loc, 100, self.sprite_ids.as_ptr().cast());
+                glUniform1iv(loc, INSTANCES as i32, self.sprite_ids.as_ptr().cast());
             }
 
             glDrawArraysInstanced(GL_TRIANGLES, 0, 6, INSTANCES as i32);

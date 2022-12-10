@@ -1,6 +1,5 @@
 // Comment this out to see dead code warnings in the editor and/or debug build
 #![cfg_attr(debug_assertions, allow(dead_code))]
-#![feature(cell_filter_map)]
 
 mod game_engine;
 
@@ -29,7 +28,7 @@ fn main() {
         let w = rand::random::<f32>() * 0.1 + 0.01;
         let h = rand::random::<f32>() * 0.1 + 0.01;
 
-        let id = i % 16 + 1;
+        let id = rand::random::<u32>() % 16 + 1;
 
         let sprite = Sprite { x, y, w, h, sprite_id: id as i32};
 
