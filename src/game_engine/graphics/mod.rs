@@ -193,7 +193,7 @@ impl Graphics {
     
             glClearColor(0.2, 0.3, 0.3, 1.0);
     
-            gfx.sprite_shader = Shader::load_shader_program("Sprite Shader", SPRITE_VERT_SHADER, SPRITE_FRAG_SHADER, &[ShaderArg("$sheet_size", "16"), ShaderArg("$instance_count", &INSTANCES.to_string())]);
+            gfx.sprite_shader = Shader::load_shader_program("Sprite Shader", SPRITE_VERT_SHADER, SPRITE_FRAG_SHADER, &[ShaderArg("$sheet_size", "17"), ShaderArg("$instance_count", &INSTANCES.to_string())]);
     
             let mut vao: u32 = 0;
             glGenVertexArrays(1, &mut vao);
@@ -277,13 +277,6 @@ impl Graphics {
                 12 as *const _,
             );
             glEnableVertexAttribArray(1);
-
-            
-            let loc: i32 = glGetUniformLocation(gfx.sprite_shader.get_program(), b"sprite_info\0" as *const u8);
-        
-            if loc >= 0 {
-                glUniform4fv(loc, 16, TEST_SPRITE_INFOS.as_ptr().cast());
-            }
             
             let f = File::open("C:/Users/Brian/Pictures/test_spritesheet.png").unwrap();
             
@@ -365,7 +358,7 @@ impl Graphics {
             let loc: i32 = glGetUniformLocation(self.sprite_shader.get_program(), b"sprite_info\0" as *const u8);
         
             if loc >= 0 {
-                glUniform4fv(loc, 16, TEST_SPRITE_INFOS.as_ptr().cast());
+                glUniform4fv(loc, 17, TEST_SPRITE_INFOS.as_ptr().cast());
             }
 
             let loc: i32 = glGetUniformLocation(program, b"sprites\0" as *const u8);
