@@ -1,5 +1,6 @@
 // Comment this out to see dead code warnings in the editor and/or debug build
 #![cfg_attr(debug_assertions, allow(dead_code))]
+#![feature(cell_filter_map)]
 
 mod game_engine;
 
