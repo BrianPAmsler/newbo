@@ -21,6 +21,7 @@ use libc::strlen;
 mod shader;
 use shader::*;
 
+use super::Sprite;
 use super::err::{EngineError, EngineErrorTrait};
 
 mod missing_gl_enums;
@@ -35,6 +36,8 @@ const FRAG_SHADER: &'static str = include_str!("shaders/terrain_shader.frag");
 
 const SPRITE_VERT_SHADER: &'static str = include_str!("shaders/sprite_shader.vert");
 const SPRITE_FRAG_SHADER: &'static str = include_str!("shaders/sprite_shader.frag");
+
+const INSTANCES: usize = 500;
 
 pub struct TerrainVertex {
     pub x: f32,
@@ -60,7 +63,8 @@ pub struct SpriteInfo {
     pub h: f32
 }
 
-const TEST_SPRITE_INFOS: [SpriteInfo; 16] = [
+const TEST_SPRITE_INFOS: [SpriteInfo; 17] = [
+    SpriteInfo { u: 0.00, v: 0.00, w: 0.00, h: 0.00},
     SpriteInfo { u: 0.00, v: 0.00, w: 0.25, h: 0.25},
     SpriteInfo { u: 0.25, v: 0.00, w: 0.25, h: 0.25},
     SpriteInfo { u: 0.50, v: 0.00, w: 0.25, h: 0.25},
@@ -106,6 +110,8 @@ pub struct Graphics {
     sprite_vao: u32,
     terrain_vbo: u32,
     terrain_vao: u32,
+    sprites: [f32; INSTANCES * 4],
+    sprite_ids: [i32; INSTANCES]
 }
 
 fn get_proc_address(window: &glfw::Window, fn_name: *const u8) -> *const c_void {
@@ -175,7 +181,9 @@ impl Graphics {
             sprite_vbo: 0,
             sprite_vao: 0,
             terrain_vbo: 0,
-            terrain_vao: 0
+            terrain_vao: 0,
+            sprites: [0.0; INSTANCES * 4],
+            sprite_ids: [0; INSTANCES]
         };
 
         // Do gl stuff
@@ -185,7 +193,7 @@ impl Graphics {
     
             glClearColor(0.2, 0.3, 0.3, 1.0);
     
-            gfx.sprite_shader = Shader::load_shader_program("Sprite Shader", SPRITE_VERT_SHADER, SPRITE_FRAG_SHADER, &[ShaderArg("$sheet_size", "16"), ShaderArg("$instance_count", "100")]);
+            gfx.sprite_shader = Shader::load_shader_program("Sprite Shader", SPRITE_VERT_SHADER, SPRITE_FRAG_SHADER, &[ShaderArg("$sheet_size", "16"), ShaderArg("$instance_count", &INSTANCES.to_string())]);
     
             let mut vao: u32 = 0;
             glGenVertexArrays(1, &mut vao);
@@ -294,6 +302,9 @@ impl Graphics {
                 SPRITE_VERTICIES.as_ptr().cast(),
                 GL_STATIC_DRAW,
             );
+
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
     
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
@@ -357,25 +368,17 @@ impl Graphics {
                 glUniform4fv(loc, 16, TEST_SPRITE_INFOS.as_ptr().cast());
             }
 
-            let mut sprites = [0.25f32; 400];
-            sprites[0] = -0.5;
-            sprites[1] = 0.0;
-
-            sprites[4] = 0.5;
-            sprites[5] = 0.0;
             let loc: i32 = glGetUniformLocation(program, b"sprites\0" as *const u8);
             if loc >= 0 {
-                glUniform4fv(loc, 100, sprites.as_ptr().cast());
+                glUniform4fv(loc, 100, self.sprites.as_ptr().cast());
             }
 
-            let mut ids = [0; 100];
-            ids[1] = 2;
             let loc: i32 = glGetUniformLocation(program, b"sprite_id\0" as *const u8);
             if loc >= 0 {
-                glUniform1iv(loc, 100, ids.as_ptr().cast());
+                glUniform1iv(loc, 100, self.sprite_ids.as_ptr().cast());
             }
 
-            glDrawArraysInstanced(GL_TRIANGLES, 0, 6, 2);
+            glDrawArraysInstanced(GL_TRIANGLES, 0, 6, INSTANCES as i32);
         }
     }
 
@@ -396,5 +399,14 @@ impl Graphics {
 
     pub fn swap_window_buffers(&mut self) {
         self.window.swap_buffers();
+    }
+
+    pub fn update_sprite(&mut self, sprite: Sprite, idx: usize) {
+        self.sprites[idx * 4] = sprite.x;
+        self.sprites[idx * 4 + 1] = sprite.y;
+        self.sprites[idx * 4 + 2] = sprite.w;
+        self.sprites[idx * 4 + 3] = sprite.h;
+
+        self.sprite_ids[idx] = sprite.sprite_id;
     }
 }

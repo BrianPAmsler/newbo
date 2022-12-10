@@ -22,6 +22,19 @@ fn main() {
     engine.set_fixed_tick_rate(60.0);
     println!("Engine Initialized.");
 
+    for i in 0..500 {
+        let x = rand::random::<f32>() * 2.0 - 1.0;
+        let y = rand::random::<f32>() * 2.0 - 1.0;
+        let w = rand::random::<f32>() * 0.1 + 0.01;
+        let h = rand::random::<f32>() * 0.1 + 0.01;
+
+        let id = rand::random::<u32>() % 16 + 1;
+
+        let sprite = Sprite { x, y, w, h, sprite_id: id as i32};
+
+        engine.get_gfx_mut().update_sprite(sprite, i);
+    }
+
     let root = engine.get_root_object();
 
     let n = 1000;

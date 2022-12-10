@@ -10,6 +10,7 @@ uniform vec4 sprites[SPRITE_COUNT];
 uniform int sprite_id[SPRITE_COUNT];
 
 smooth out vec2 tex_coord;
+flat out int id;
 
 void main() {
     vec2 offset = sprites[gl_InstanceID].xy;
@@ -19,6 +20,7 @@ void main() {
     gl_Position = vec4(p.xy + offset, p.z, 1.0);
 
     int s_id = sprite_id[gl_InstanceID];
+    id = s_id;
     vec2 uv_bl = sprite_info[s_id].xy;
     vec2 uv_w = sprite_info[s_id].zw;
 

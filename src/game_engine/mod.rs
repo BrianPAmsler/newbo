@@ -28,6 +28,14 @@ pub struct Engine {
     offset2: f32
 }
 
+pub struct Sprite {
+    pub sprite_id: i32,
+    pub x: f32,
+    pub y: f32,
+    pub w: f32,
+    pub h: f32
+}
+
 impl Engine {
     pub fn init_engine() -> Result<Engine, EngineError> {
         let result = Graphics::init_gl();
@@ -121,6 +129,10 @@ impl Engine {
 
     pub fn get_gfx(&self) -> &Graphics {
         &self.gfx
+    }
+
+    pub fn get_gfx_mut(&mut self) -> &mut Graphics {
+        &mut self.gfx
     }
 
     fn init(&mut self) {
