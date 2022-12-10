@@ -278,7 +278,7 @@ impl Graphics {
             );
             glEnableVertexAttribArray(1);
             
-            let f = File::open("C:/Users/Brian/Pictures/test_spritesheet.png").unwrap();
+            let f = File::open("test_spritesheet.png").unwrap();
             
             let tex = gfx.sprite_shader.load_texture(f);
 
