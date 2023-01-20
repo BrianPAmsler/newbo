@@ -22,6 +22,10 @@ fn main() {
     engine.set_fixed_tick_rate(60.0);
     println!("Engine Initialized.");
 
+    let root = engine.get_root_object();
+
+    root.add_component(Box::new(TestComponent::default()));
+
     for i in 0..500 {
         let x = rand::random::<f32>() * 2.0 - 1.0;
         let y = rand::random::<f32>() * 2.0 - 1.0;
@@ -30,29 +34,12 @@ fn main() {
 
         let id = rand::random::<u32>() % 16 + 1;
 
-        let sprite = Sprite { x, y, w, h, sprite_id: id as i32};
+        let obj = GameObject::create_empty(format!("obj #{}", i), Some(root.share()));
+        let mut sprite = SpriteComponent::new(i, id as i32);
+        sprite.sprite = Sprite { x, y, w, h, sprite_id: id as i32};
 
-        engine.get_gfx_mut().update_sprite(sprite, i);
-    }
-
-    let root = engine.get_root_object();
-
-    let n = 1000;
-
-    let mut objs = Vec::new();
-    objs.push(root.share());
-    objs.reserve(n);
-
-    for i in 0..n {
-        let choice = rand::random::<usize>() % objs.len();
-
-        let s = format!("test {}", i);
-
-        objs.push(GameObject::create_empty(&s[..], Some(objs[choice].share())));
-
-        if i == n - 1 {
-            objs[i].add_component(Box::new(TestComponent::default()));
-        }
+        obj.add_component(Box::new(sprite));
+        obj.add_component(Box::new(WASDy));
     }
 
     println!("Starting Game Loop...");

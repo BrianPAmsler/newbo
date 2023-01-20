@@ -4,6 +4,8 @@ mod n_array;
 mod vectors;
 mod err;
 
+use std::collections::HashMap;
+
 use game_object::*;
 use glfw::{Key, Action};
 pub use vectors::*;
@@ -24,10 +26,12 @@ pub struct Engine {
     fixed_tick_duration: f64,
     gfx: Graphics,
     root_object: GameObject,
+    keys: HashMap<glfw::Key, bool>,
     offset1: f32,
     offset2: f32
 }
 
+#[derive(Clone, Copy, Debug)]
 pub struct Sprite {
     pub sprite_id: i32,
     pub x: f32,
@@ -55,7 +59,7 @@ impl Engine {
         
         gfx.buffer_terrain_verticies(&VERTICES);
 
-        Ok(Engine { running: false, fixed_tick_duration: 1.0 / 60.0, gfx: gfx, root_object: GameObject::create_empty("root", None), offset1: 0.0, offset2: 0.0 })
+        Ok(Engine { running: false, fixed_tick_duration: 1.0 / 60.0, gfx: gfx, root_object: GameObject::create_empty("root".to_owned(), None), keys: HashMap::new(), offset1: 0.0, offset2: 0.0 })
     }
 
     pub fn start_game_loop(&mut self) -> Result<(), EngineError> {
@@ -78,11 +82,16 @@ impl Engine {
         while self.gfx.window_alive() {
             // Poll for and process events
             for (_, event) in self.gfx.get_window_events() {
-                println!("{:?}", event);
                 match event {
                     glfw::WindowEvent::Key(Key::Escape, _, Action::Press, _) => {
                         should_close = true;
                     },
+                    glfw::WindowEvent::Key(k, _, Action::Press, _)  => {
+                        self.keys.insert(k, true);
+                    },
+                    glfw::WindowEvent::Key(k, _, Action::Release, _)  => {
+                        self.keys.insert(k, false);
+                    }
                     _ => {},
                 }
             }
@@ -135,28 +144,40 @@ impl Engine {
         &mut self.gfx
     }
 
+    pub fn get_key(&self, key: glfw::Key) -> bool {
+        if !self.keys.contains_key(&key) {
+            return false;
+        }
+
+        self.keys[&key]
+    }
+
     fn init(&mut self) {
         let stuff = self.root_object.get_all_children();
         for obj in stuff {
-            obj.init(&self);
+            obj.init(self);
         }
     }
 
     fn game_tick(&mut self, delta_time: f64) {
        self.offset1 += 0.01 * delta_time as f32;
 
+       self.root_object.share().update(delta_time, self);
+
        let stuff = self.root_object.get_all_children();
        for obj in stuff {
-           obj.update(delta_time, &self);
+           obj.update(delta_time, self);
        }
     }
 
     fn fixed_game_tick(&mut self, delta_time: f64) {
         self.offset2 -= 0.01 * delta_time as f32;
 
+        self.root_object.share().fixed_update(delta_time, self);
+
         let stuff = self.root_object.get_all_children();
         for obj in stuff {
-            obj.fixed_update(delta_time, &self);
+            obj.fixed_update(delta_time, self);
         }
     }
 }
