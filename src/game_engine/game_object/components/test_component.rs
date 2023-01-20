@@ -1,4 +1,4 @@
-use crate::game_engine::{game_object::{GameObject, GameObjRef}, self};
+use crate::game_engine::{game_object::GameObjRef, self};
 
 use super::{Component, TickInfo};
 

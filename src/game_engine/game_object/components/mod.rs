@@ -9,7 +9,7 @@ pub use sprite::SpriteComponent;
 
 use crate::game_engine::Engine;
 
-use super::{GameObject, _GameObject, GameObjRef};
+use super::GameObjRef;
 
 pub struct TickInfo<'a> {
     pub(in crate::game_engine) delta_time: f64,

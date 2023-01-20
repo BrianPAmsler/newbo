@@ -4,9 +4,6 @@
 
 mod game_engine;
 
-use std::fs::File;
-use std::io::BufReader;
-
 use game_engine::*;
 use game_engine::game_object::components::*;
 use game_engine::game_object::GameObject;
@@ -33,6 +30,8 @@ fn main() {
         let w = rand::random::<f32>() * 0.1 + 0.01;
         let h = rand::random::<f32>() * 0.1 + 0.01;
 
+        let speed = rand::random::<f32>() * 0.4 + 0.1;
+
         let id = rand::random::<u32>() % 16 + 1;
 
         let obj = GameObject::create_empty(format!("obj #{}", i), Some(root.share()));
@@ -40,7 +39,7 @@ fn main() {
         sprite.sprite = Sprite { x, y, w, h, sprite_id: id as i32};
 
         obj.add_component(Box::new(sprite));
-        obj.add_component(Box::new(WASDy));
+        obj.add_component(Box::new(WASDy { speed }));
     }
 
     println!("Starting Game Loop...");

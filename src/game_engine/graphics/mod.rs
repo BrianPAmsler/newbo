@@ -4,10 +4,8 @@ use glfw::{FlushedMessages, WindowEvent, Context};
 
 use gl33::global_loader::*;
 use gl33::gl_enumerations::*;
-use missing_gl_enums::*;
 
 use std::fs::File;
-use std::io::BufReader;
 use std::mem::MaybeUninit;
 use std::os::raw::c_void;
 use std::sync::mpsc::Receiver;
