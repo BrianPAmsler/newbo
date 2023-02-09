@@ -1,11 +1,13 @@
 mod test_component;
 mod wasdy;
 mod sprite;
+mod collision_detector;
 
 use downcast_rs::{Downcast, impl_downcast};
 pub use test_component::TestComponent;
 pub use wasdy::WASDy;
 pub use sprite::SpriteComponent;
+pub use collision_detector::Collider;
 
 use crate::game_engine::Engine;
 

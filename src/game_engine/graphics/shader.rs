@@ -188,7 +188,7 @@ impl Shader {
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR.0 as i32); //scale linearly when image bigger than texture
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR.0 as i32); //scale linearly when image smalled than texture
-        glTexImage2D(GL_TEXTURE_2D, 0, 3, img.width() as i32, img.height() as i32, 0,
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8.0 as i32, img.width() as i32, img.height() as i32, 0,
         GL_RGBA, GL_UNSIGNED_BYTE, ptr.cast());
         glEnable(GL_TEXTURE_2D);
 

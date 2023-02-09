@@ -12,7 +12,7 @@ pub struct SpriteComponent {
 
 impl SpriteComponent {
     pub fn new(sprite_number: usize, sprite_id: i32) -> SpriteComponent {
-        SpriteComponent { sprite: Sprite { sprite_id, x: 0.0, y: 0.0, w: 0.0, h: 0.0 }, index: sprite_number, _pd: PhantomData }
+        SpriteComponent { sprite: Sprite { sprite_id, x: 0.0, y: 0.0, w: 1.0, h: 1.0 }, index: sprite_number, _pd: PhantomData }
     }
 }
 
@@ -27,7 +27,9 @@ impl Component for SpriteComponent {
         let engine = _info.engine;
         let gfx = engine.get_gfx_mut();
 
-        gfx.update_sprite(self.sprite, self.index);
+        let real_sprite = Sprite { sprite_id: self.sprite.sprite_id, x: _owner.obj.pos.x, y: _owner.obj.pos.y, w: self.sprite.w, h: self.sprite.h };
+
+        gfx.update_sprite(real_sprite, self.index);
     }
 
     fn fixed_update(&mut self, _info: super::TickInfo, _owner: GameObjRef) {}

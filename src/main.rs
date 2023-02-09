@@ -1,6 +1,5 @@
 // Comment this out to see dead code warnings in the editor and/or debug build
 #![cfg_attr(debug_assertions, allow(dead_code))]
-#![feature(cell_filter_map)]
 
 mod game_engine;
 
@@ -24,23 +23,23 @@ fn main() {
 
     root.add_component(Box::new(TestComponent::default()));
 
-    for i in 0..500 {
-        let x = rand::random::<f32>() * 2.0 - 1.0;
-        let y = rand::random::<f32>() * 2.0 - 1.0;
-        let w = rand::random::<f32>() * 0.1 + 0.01;
-        let h = rand::random::<f32>() * 0.1 + 0.01;
+    let ground = GameObject::create_empty("ground".to_owned(), Some(root.share()));
+    ground.set_pos(Vector3{ x: 0.0, y: -0.75, z: 0.0 });
+    let mut ground_sprite = SpriteComponent::new(0, 1);
+    ground_sprite.sprite.w = 2.0;
+    ground_sprite.sprite.h = 0.5;
+    ground.add_component(Box::new(ground_sprite));
+    let ground_collider = Collider::new(2.0, 0.5, None);
+    ground.add_component(Box::new(ground_collider));
 
-        let speed = rand::random::<f32>() * 0.4 + 0.1;
-
-        let id = rand::random::<u32>() % 16 + 1;
-
-        let obj = GameObject::create_empty(format!("obj #{}", i), Some(root.share()));
-        let mut sprite = SpriteComponent::new(i, id as i32);
-        sprite.sprite = Sprite { x, y, w, h, sprite_id: id as i32};
-
-        obj.add_component(Box::new(sprite));
-        obj.add_component(Box::new(WASDy { speed }));
-    }
+    let guy = GameObject::create_empty("guy".to_owned(), Some(root.share()));
+    let mut guy_sprite = SpriteComponent::new(1, 2);
+    guy_sprite.sprite.w = 0.5;
+    guy_sprite.sprite.h = 1.0;
+    guy.add_component(Box::new(guy_sprite));
+    guy.add_component(Box::new(WASDy { speed: 1.0 }));
+    let guy_collider = Collider::new(0.5, 1.0, Some(Box::new(|_, _| (println!("collide!")))));
+    guy.add_component(Box::new(guy_collider));
 
     println!("Starting Game Loop...");
     engine.start_game_loop().unwrap();

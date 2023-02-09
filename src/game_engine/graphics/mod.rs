@@ -61,33 +61,19 @@ pub struct SpriteInfo {
     pub h: f32
 }
 
-const TEST_SPRITE_INFOS: [SpriteInfo; 17] = [
+const TEST_SPRITE_INFOS: [SpriteInfo; 3] = [
     SpriteInfo { u: 0.00, v: 0.00, w: 0.00, h: 0.00},
-    SpriteInfo { u: 0.00, v: 0.00, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.25, v: 0.00, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.50, v: 0.00, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.75, v: 0.00, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.00, v: 0.25, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.25, v: 0.25, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.50, v: 0.25, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.75, v: 0.25, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.00, v: 0.50, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.25, v: 0.50, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.50, v: 0.50, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.75, v: 0.50, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.00, v: 0.75, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.25, v: 0.75, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.50, v: 0.75, w: 0.25, h: 0.25},
-    SpriteInfo { u: 0.75, v: 0.75, w: 0.25, h: 0.25},
+    SpriteInfo { u: 0.00, v: 0.00, w: 1.00, h: 0.25},
+    SpriteInfo { u: 0.00, v: 0.25, w: 0.25, h: 0.5},
 ];
 
 const SPRITE_VERTICIES: [SpriteVertex; 6] = [
-    SpriteVertex { x: -1.0, y: -1.0, z: 0.0, u: 0.0, v: 1.0 }, // Bottom left
-    SpriteVertex { x:  1.0, y: -1.0, z: 0.0, u: 1.0, v: 1.0 }, // Bottom right
-    SpriteVertex { x:  1.0, y:  1.0, z: 0.0, u: 1.0, v: 0.0 }, // Top right
-    SpriteVertex { x: -1.0, y:  1.0, z: 0.0, u: 0.0, v: 0.0 }, // Top left
-    SpriteVertex { x: -1.0, y: -1.0, z: 0.0, u: 0.0, v: 1.0 }, // Bottom left
-    SpriteVertex { x:  1.0, y:  1.0, z: 0.0, u: 1.0, v: 0.0 }, // Top right
+    SpriteVertex { x: -0.5, y: -0.5, z: 0.0, u: 0.0, v: 1.0 }, // Bottom left
+    SpriteVertex { x:  0.5, y: -0.5, z: 0.0, u: 1.0, v: 1.0 }, // Bottom right
+    SpriteVertex { x:  0.5, y:  0.5, z: 0.0, u: 1.0, v: 0.0 }, // Top right
+    SpriteVertex { x: -0.5, y:  0.5, z: 0.0, u: 0.0, v: 0.0 }, // Top left
+    SpriteVertex { x: -0.5, y: -0.5, z: 0.0, u: 0.0, v: 1.0 }, // Bottom left
+    SpriteVertex { x:  0.5, y:  0.5, z: 0.0, u: 1.0, v: 0.0 }, // Top right
 ];
 
 impl EngineErrorTrait for glfw::InitError {
@@ -188,10 +174,10 @@ impl Graphics {
         unsafe {
             load_global_gl(&|fn_name| get_proc_address(&gfx.window, fn_name));
             gfx.terrain_shader = Shader::load_shader_program("Terrain Shader", VERT_SHADER, FRAG_SHADER, &[]);
-    
+            
             glClearColor(0.2, 0.3, 0.3, 1.0);
     
-            gfx.sprite_shader = Shader::load_shader_program("Sprite Shader", SPRITE_VERT_SHADER, SPRITE_FRAG_SHADER, &[ShaderArg("$sheet_size", "17"), ShaderArg("$instance_count", &INSTANCES.to_string())]);
+            gfx.sprite_shader = Shader::load_shader_program("Sprite Shader", SPRITE_VERT_SHADER, SPRITE_FRAG_SHADER, &[ShaderArg("$sheet_size", "3"), ShaderArg("$instance_count", &INSTANCES.to_string())]);
     
             let mut vao: u32 = 0;
             glGenVertexArrays(1, &mut vao);
@@ -276,7 +262,7 @@ impl Graphics {
             );
             glEnableVertexAttribArray(1);
             
-            let f = File::open("test_spritesheet.png").unwrap();
+            let f = File::open("testgame_spritesheet.png").unwrap();
             
             let tex = gfx.sprite_shader.load_texture(f);
 
@@ -294,8 +280,8 @@ impl Graphics {
                 GL_STATIC_DRAW,
             );
 
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glEnable( GL_BLEND );
     
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
@@ -356,7 +342,7 @@ impl Graphics {
             let loc: i32 = glGetUniformLocation(self.sprite_shader.get_program(), b"sprite_info\0" as *const u8);
         
             if loc >= 0 {
-                glUniform4fv(loc, 17, TEST_SPRITE_INFOS.as_ptr().cast());
+                glUniform4fv(loc, 3, TEST_SPRITE_INFOS.as_ptr().cast());
             }
 
             let loc: i32 = glGetUniformLocation(program, b"sprites\0" as *const u8);
