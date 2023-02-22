@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, collections::VecDeque};
+use std::{rc::Rc, cell::{RefCell, Ref, RefMut}, collections::VecDeque};
 pub mod components;
 
 use components::Component;
@@ -30,8 +30,8 @@ impl AsRef<GameObject> for GameObject {
 }
 
 impl GameObject {
-    pub fn create_empty(name: String, parent: Option<Rc<RefCell<GameObject>>>) -> GameObject {
-        GameObject {
+    pub fn create_empty(name: String, parent: Option<Rc<RefCell<GameObject>>>) -> Rc<RefCell<GameObject>> {
+        Rc::new(RefCell::new(GameObject {
             name,
             pos: Vector3::ZERO,
             rot: Vector3::ZERO,
@@ -39,14 +39,14 @@ impl GameObject {
             components: Vec::new(),
             children: Vec::new(),
             parent
-        }
+        }))
     }
 
     pub fn get_pos(&self) -> Vector3 {
         self.pos
     }
 
-    pub fn set_pos(&self, pos: Vector3) {
+    pub fn set_pos(&mut self, pos: Vector3) {
         self.pos = pos;
     }
 
@@ -78,12 +78,12 @@ impl GameObject {
         }
     }
 
-    pub fn add_component<C: Component>(&self, component: C) {
+    pub fn add_component<C: Component>(&mut self, component: C) {
         self.components.push(Rc::new(RefCell::new(component)));
     }
 
     pub fn get_parent(&self) -> Option<Rc<RefCell<GameObject>>> {
-        match self.parent {
+        match &self.parent {
             Some(parent) => Some(parent.clone()),
             None => None
         }
@@ -125,8 +125,9 @@ impl GameObject {
         // BFS
         let mut q = VecDeque::new();
         
-        for c in self.children {
+        for c in &self.children {
             q.push_back(c.clone());
+            v.push(c.clone());
         }
 
         while q.len() > 0 {
@@ -142,11 +143,11 @@ impl GameObject {
         v
     }
 
-    pub fn add_child(&self, child: Rc<RefCell<GameObject>>) {
+    pub fn add_child(&mut self, child: Rc<RefCell<GameObject>>) {
         self.children.push(child.clone());
     }
 
-    pub fn remove_child(&self, child: *const GameObject) {
+    pub fn remove_child(&mut self, child: *const GameObject) {
         let mut idx = -1;
         for (i, c) in self.children.iter().enumerate() {
             if c.borrow().as_ref() as *const GameObject == child {
@@ -162,22 +163,34 @@ impl GameObject {
         self.children.remove(idx as usize);
     }
 
-    pub fn borrow_component<C: Component>(&self) -> Option<&C> {
-        for c in self.components {
-            let r: Option<&C> = c.borrow().downcast_ref();
-            if r.is_some() {
-                return r;
+    pub fn borrow_component<C: Component>(&self) -> Option<Ref<C>> {
+        for c in &self.components {
+            let r = c.borrow();
+            let c = Ref::filter_map(r, |x| {
+                let c = x.downcast_ref();
+
+                c
+            }).ok();
+
+            if c.is_some() {
+                return c;
             }
         }
 
         None
     }
 
-    pub fn borrow_component_mut<C: Component>(&self) -> Option<&mut C> {
-        for c in self.components {
-            let r: Option<&mut C> = c.borrow().downcast_mut();
-            if r.is_some() {
-                return r;
+    pub fn borrow_component_mut<C: Component>(&self) -> Option<RefMut<C>> {
+        for c in &self.components {
+            let r = c.borrow_mut();
+            let c = RefMut::filter_map(r, |x| {
+                let c = x.downcast_mut();
+
+                c
+            }).ok();
+
+            if c.is_some() {
+                return c;
             }
         }
 

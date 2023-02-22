@@ -21,25 +21,25 @@ fn main() {
 
     let root = engine.get_root_object();
 
-    root.add_component(Box::new(TestComponent::default()));
+    root.borrow_mut().add_component(TestComponent::default());
 
-    let ground = GameObject::create_empty("ground".to_owned(), Some(root.share()));
-    ground.set_pos(Vector3{ x: 0.0, y: -0.75, z: 0.0 });
+    let ground = GameObject::create_empty("ground".to_owned(), Some(root.clone()));
+    ground.borrow_mut().set_pos(Vector3{ x: 0.0, y: -0.75, z: 0.0 });
     let mut ground_sprite = SpriteComponent::new(0, 1);
     ground_sprite.sprite.w = 2.0;
     ground_sprite.sprite.h = 0.5;
-    ground.add_component(Box::new(ground_sprite));
+    ground.borrow_mut().add_component(ground_sprite);
     let ground_collider = Collider::new(2.0, 0.5, None);
-    ground.add_component(Box::new(ground_collider));
+    ground.borrow_mut().add_component(ground_collider);
 
-    let guy = GameObject::create_empty("guy".to_owned(), Some(root.share()));
+    let guy = GameObject::create_empty("guy".to_owned(), Some(root.clone()));
     let mut guy_sprite = SpriteComponent::new(1, 2);
     guy_sprite.sprite.w = 0.5;
     guy_sprite.sprite.h = 1.0;
-    guy.add_component(Box::new(guy_sprite));
-    guy.add_component(Box::new(WASDy { speed: 1.0 }));
+    guy.borrow_mut().add_component(guy_sprite);
+    guy.borrow_mut().add_component(WASDy { speed: 1.0 });
     let guy_collider = Collider::new(0.5, 1.0, Some(Box::new(|_, _| (println!("collide!")))));
-    guy.add_component(Box::new(guy_collider));
+    guy.borrow_mut().add_component(guy_collider);
 
     println!("Starting Game Loop...");
     engine.start_game_loop().unwrap();

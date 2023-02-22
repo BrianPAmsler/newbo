@@ -5,7 +5,7 @@ mod vectors;
 mod err;
 mod quadtree;
 
-use std::{cell::RefMut, collections::HashSet};
+use std::{cell::{RefMut, RefCell}, collections::HashSet, rc::Rc};
 
 use game_object::*;
 use glfw::{Key, Action};
@@ -26,7 +26,7 @@ pub struct Engine {
     running: bool,
     fixed_tick_duration: f64,
     gfx: Graphics,
-    root_object: GameObject,
+    root_object: Rc<RefCell<GameObject>>,
     keys: [bool; 350],
     offset1: f32,
     offset2: f32
@@ -133,8 +133,8 @@ impl Engine {
         self.fixed_tick_duration = 1.0 / tickrate;
     }
 
-    pub fn get_root_object(&self) -> GameObject {
-        self.root_object.share()
+    pub fn get_root_object(&self) -> Rc<RefCell<GameObject>> {
+        self.root_object.clone()
     }
 
     pub fn get_gfx(&self) -> &Graphics {
@@ -150,28 +150,29 @@ impl Engine {
     }
 
     pub fn process_components<C: Component>(&self, f: &mut dyn FnMut(&mut [&mut C]) -> ()) {
-        let objs = self.root_object.get_all_children();
-        let mut refs: Vec<RefMut<C>> = objs.iter().filter_map(|x| x.borrow_component_mut::<C>()).collect();
-        let mut refs2: Vec<&mut C> = refs.iter_mut().map(|x| &mut **x).collect();
+        let objs = self.root_object.borrow().get_all_children();
+        let borrows: Vec<RefMut<GameObject>> = objs.iter().map(|x| x.borrow_mut()).collect();
+        let mut refs: Vec<RefMut<C>> = borrows.iter().filter_map(|x| x.borrow_component_mut::<C>()).collect();
+        let mut refs2: Vec<&mut C> = refs.iter_mut().map(|x| &mut **x).collect(); 
 
         f(&mut refs2);
     }
 
     fn init(&mut self) {
-        let stuff = self.root_object.get_all_children();
+        let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
-            obj.init(self);
+            obj.borrow_mut().init(self);
         }
     }
 
     fn game_tick(&mut self, delta_time: f64) {
         self.offset1 += 0.01 * delta_time as f32;
 
-        self.root_object.share().update(delta_time, self);
+        self.root_object.clone().borrow_mut().update(delta_time, self);
 
-        let stuff = self.root_object.get_all_children();
+        let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
-            obj.update(delta_time, self);
+            obj.borrow_mut().update(delta_time, self);
         }
 
         let mut collisions = HashSet::<(*const Collider, *const Collider)>::new();
@@ -201,11 +202,11 @@ impl Engine {
     fn fixed_game_tick(&mut self, delta_time: f64) {
         self.offset2 -= 0.01 * delta_time as f32;
 
-        self.root_object.share().fixed_update(delta_time, self);
+        self.root_object.clone().borrow_mut().fixed_update(delta_time, self);
 
-        let stuff = self.root_object.get_all_children();
+        let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
-            obj.fixed_update(delta_time, self);
+            obj.borrow_mut().fixed_update(delta_time, self);
         }
     }
 }

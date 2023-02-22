@@ -1,3 +1,5 @@
+use crate::game_engine::game_object::GameObject;
+
 use super::Component;
 use std::hash::Hash;
 
@@ -25,10 +27,10 @@ impl Hash for Collider {
 }
 
 impl Component for Collider {
-    fn update(&mut self, _info: super::TickInfo, _owner: crate::game_engine::game_object::GameObjRef) {
+    fn update(&mut self, _info: super::TickInfo, _owner: &mut GameObject) {
         // This is hacky as fuck i need a better solution.
-        self.x = _owner.obj.pos.x;
-        self.y = _owner.obj.pos.y;
+        self.x = _owner.pos.x;
+        self.y = _owner.pos.y;
     }
 }
 
