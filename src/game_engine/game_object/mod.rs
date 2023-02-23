@@ -31,15 +31,19 @@ impl AsRef<GameObject> for GameObject {
 
 impl GameObject {
     pub fn create_empty(name: String, parent: Option<Rc<RefCell<GameObject>>>) -> Rc<RefCell<GameObject>> {
-        Rc::new(RefCell::new(GameObject {
+        let new_obj = Rc::new(RefCell::new(GameObject {
             name,
             pos: Vector3::ZERO,
             rot: Vector3::ZERO,
             scale: Vector3::ONE,
             components: Vec::new(),
             children: Vec::new(),
-            parent
-        }))
+            parent: None
+        }));
+
+        GameObject::set_parent(new_obj.clone(), parent);
+
+        new_obj
     }
 
     pub fn get_pos(&self) -> Vector3 {
@@ -124,7 +128,6 @@ impl GameObject {
 
         // BFS
         let mut q = VecDeque::new();
-        
         for c in &self.children {
             q.push_back(c.clone());
             v.push(c.clone());
@@ -143,7 +146,7 @@ impl GameObject {
         v
     }
 
-    pub fn add_child(&mut self, child: Rc<RefCell<GameObject>>) {
+    fn add_child(&mut self, child: Rc<RefCell<GameObject>>) {
         self.children.push(child.clone());
     }
 
