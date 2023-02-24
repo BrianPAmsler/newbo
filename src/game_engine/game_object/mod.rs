@@ -159,7 +159,7 @@ impl GameObject {
             }
         }
 
-        if idx == 1 {
+        if idx == -1 {
             panic!("Child does not exist! This shouldn't happen!");
         }
 
