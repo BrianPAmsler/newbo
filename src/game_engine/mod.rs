@@ -5,7 +5,7 @@ mod vectors;
 mod err;
 mod quadtree;
 
-use std::{cell::{RefMut, RefCell}, collections::HashSet, rc::Rc};
+use std::{cell::RefCell, rc::Rc};
 
 use game_object::*;
 use glfw::{Key, Action};
@@ -14,7 +14,7 @@ pub use n_array::NArray;
 
 use graphics::*;
 
-use self::{err::EngineError, game_object::components::{Component, Collider}};
+use self::err::EngineError;
 
 const VERTICES: [TerrainVertex; 3] = [
     TerrainVertex {x: -0.5, y: -0.5, z: 0.0, r: 1.0, g: 0.0, b: 0.0},
@@ -149,15 +149,6 @@ impl Engine {
         self.keys[key as usize]
     }
 
-    pub fn process_components<C: Component>(&self, f: &mut dyn FnMut(&mut [&mut C]) -> ()) {
-        let objs = self.root_object.borrow().get_all_children();
-        let borrows: Vec<RefMut<GameObject>> = objs.iter().map(|x| x.borrow_mut()).collect();
-        let mut refs: Vec<RefMut<C>> = borrows.iter().filter_map(|x| x.borrow_component_mut::<C>()).collect();
-        let mut refs2: Vec<&mut C> = refs.iter_mut().map(|x| &mut **x).collect(); 
-
-        f(&mut refs2);
-    }
-
     fn init(&mut self) {
         let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
@@ -173,29 +164,6 @@ impl Engine {
         let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
             obj.borrow_mut().update(delta_time, self);
-        }
-
-        let mut collisions = HashSet::<(*const Collider, *const Collider)>::new();
-        self.process_components::<Collider>(&mut |colliders| {
-            for c1 in colliders.iter() {
-                for c2 in colliders.iter() {
-                    let collision = (*c1 as *const Collider, *c2 as *const Collider);
-                    
-                    if collision.0 != collision.1 && !collisions.contains(&(collision.1, collision.0)) {
-                        if c1.check_collision(c2) {
-                            collisions.insert(collision);
-                        }
-                    }
-                }
-            }
-        });
-
-        for collision in collisions {
-            let a = unsafe {&*collision.0};
-            let b = unsafe {&*collision.1};
-
-            a.collide(b);
-            b.collide(a);
         }
     }
 
