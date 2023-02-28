@@ -1,9 +1,9 @@
-use std::{rc::Rc, cell::{RefCell, Ref, RefMut}, collections::VecDeque};
+use std::{rc::Rc, cell::RefCell, collections::VecDeque};
 pub mod components;
 
 use components::Component;
 
-use self::components::TickInfo;
+use self::components::{TickInfo, CompRc};
 
 use super::{Vector3, Engine};
 
@@ -166,37 +166,31 @@ impl GameObject {
         self.children.remove(idx as usize);
     }
 
-    pub fn borrow_component<C: Component>(&self) -> Option<Ref<C>> {
+    pub fn get_component<C: Component>(&self) -> Option<CompRc<C>> {
         for c in &self.components {
-            let r = c.borrow();
-            let c = Ref::filter_map(r, |x| {
-                let c = x.downcast_ref();
+            let t = c.borrow();
+            let r: Option<&C> = t.downcast_ref();
 
-                c
-            }).ok();
-
-            if c.is_some() {
-                return c;
+            if r.is_some() {
+                return CompRc::downcast_rc(c);
             }
         }
 
         None
     }
 
-    pub fn borrow_component_mut<C: Component>(&self) -> Option<RefMut<C>> {
+    pub fn get_components<C: Component>(&self) -> Vec<CompRc<C>> {
+        let mut vec = Vec::new();
+
         for c in &self.components {
-            let r = c.borrow_mut();
-            let c = RefMut::filter_map(r, |x| {
-                let c = x.downcast_mut();
+            let t = c.borrow();
+            let r: Option<&C> = t.downcast_ref();
 
-                c
-            }).ok();
-
-            if c.is_some() {
-                return c;
+            if r.is_some() {
+                vec.push(CompRc::downcast_rc(c).unwrap());
             }
         }
 
-        None
+        vec
     }
 }

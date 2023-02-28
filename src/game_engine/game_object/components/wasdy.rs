@@ -24,6 +24,13 @@ impl Component for WASDy {
         if _info.engine.get_key(Key::D) {
             _owner.pos.x += self.speed * _info.delta_time as f32;
         }
+
+        if _info.engine.get_key(Key::Y) {
+            let rc = _owner.get_component::<SpriteComponent>().unwrap();
+            let mut sprite = rc.borrow_mut();
+
+            sprite.sprite.w += 0.1 * _info.delta_time as f32;
+        }
     }
 
     fn fixed_update(&mut self, _info: super::TickInfo, _owner: &mut GameObject) {}

@@ -56,10 +56,5 @@ impl Collider {
         false
     }
 
-    pub fn collide(&self, other: &Collider) {
-        match &self.on_collide {
-            Some(f) => f(&self, other),
-            None => ()
-        }
-    }
+    //pub fn move_and_check_collision()
 }
