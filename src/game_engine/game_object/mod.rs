@@ -1,9 +1,9 @@
-use std::{rc::Rc, cell::{RefCell, Ref}, collections::VecDeque};
+use std::{rc::Rc, cell::RefCell, collections::VecDeque};
 pub mod components;
 
 use components::Component;
 
-use self::components::{TickInfo, CompRc};
+use self::components::CompRc;
 
 use super::{Vector3, Engine};
 
