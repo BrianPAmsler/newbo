@@ -14,7 +14,7 @@ pub use n_array::NArray;
 
 use graphics::*;
 
-use self::err::EngineError;
+use self::{err::EngineError, game_object::components::TickInfo};
 
 const VERTICES: [TerrainVertex; 3] = [
     TerrainVertex {x: -0.5, y: -0.5, z: 0.0, r: 1.0, g: 0.0, b: 0.0},
@@ -153,6 +153,10 @@ impl Engine {
         let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
             obj.borrow_mut().init(self);
+            let comps = obj.borrow().get_all_components();
+            for comp in comps {
+                comp.borrow_mut().init(self, Rc::clone(&obj));
+            }
         }
     }
 
@@ -164,6 +168,10 @@ impl Engine {
         let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
             obj.borrow_mut().update(delta_time, self);
+            let comps = obj.borrow().get_all_components();
+            for comp in comps {
+                comp.borrow_mut().update(TickInfo { delta_time, engine: self }, Rc::clone(&obj));
+            }
         }
     }
 
@@ -175,6 +183,10 @@ impl Engine {
         let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
             obj.borrow_mut().fixed_update(delta_time, self);
+            let comps = obj.borrow().get_all_components();
+            for comp in comps {
+                comp.borrow_mut().fixed_update(TickInfo { delta_time, engine: self }, Rc::clone(&obj));
+            }
         }
     }
 }

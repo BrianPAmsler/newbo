@@ -1,7 +1,7 @@
-use crate::game_engine::game_object::GameObject;
+use crate::game_engine::{game_object::GameObject, Engine};
 
 use super::Component;
-use std::hash::Hash;
+use std::{hash::Hash, rc::Rc, cell::RefCell};
 
 pub struct Collider {
     x: f32,
@@ -27,10 +27,10 @@ impl Hash for Collider {
 }
 
 impl Component for Collider {
-    fn update(&mut self, _info: super::TickInfo, _owner: &mut GameObject) {
+    fn update(&mut self, _info: super::TickInfo, _owner: Rc<RefCell<GameObject>>) {
         // This is hacky as fuck i need a better solution.
-        self.x = _owner.pos.x;
-        self.y = _owner.pos.y;
+        self.x = _owner.borrow().pos.x;
+        self.y = _owner.borrow().pos.y;
     }
 }
 
@@ -56,5 +56,9 @@ impl Collider {
         false
     }
 
-    //pub fn move_and_check_collision()
+    pub fn move_and_check_collision(&mut self, engine: &mut Engine) {
+        let colliders = engine.get_root_object().borrow().get_components_in_children::<Collider>();
+
+
+    }
 }

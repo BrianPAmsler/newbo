@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, collections::VecDeque};
+use std::{rc::Rc, cell::{RefCell, Ref}, collections::VecDeque};
 pub mod components;
 
 use components::Component;
@@ -40,7 +40,7 @@ impl GameObject {
             children: Vec::new(),
             parent: None
         }));
-
+        
         GameObject::set_parent(new_obj.clone(), parent);
 
         new_obj
@@ -55,31 +55,19 @@ impl GameObject {
     }
 
     pub(in crate::game_engine) fn init(&mut self, engine: &mut Engine) {
-        let comps: Vec<Rc<RefCell<dyn Component>>> = self.components.iter_mut().map(|x| x.clone()).collect();
-        for cmp in comps {
-            cmp.borrow_mut().init(engine, self);
-        }
+        // Idk if this is gonna be needed.
     }
 
     pub(in crate::game_engine) fn update(&mut self, delta_time: f64, engine: &mut Engine) {
-        let comps: Vec<Rc<RefCell<dyn Component>>> = self.components.iter_mut().map(|x| x.clone()).collect();
-        for cmp in comps {
-            cmp.borrow_mut().update(TickInfo { delta_time: delta_time, engine }, self);
-        }
+        // Idk if this is gonna be needed.
     }
 
     pub(in crate::game_engine) fn fixed_update(&mut self, delta_time: f64, engine: &mut Engine) {
-        let comps: Vec<Rc<RefCell<dyn Component>>> = self.components.iter_mut().map(|x| x.clone()).collect();
-        for cmp in comps {
-            cmp.borrow_mut().fixed_update(TickInfo { delta_time: delta_time, engine }, self);
-        }
+        // Idk if this is gonna be needed.
     }
 
     pub(in crate::game_engine) fn render(&mut self, delta_time: f64, engine: &mut Engine) {
-        let comps: Vec<Rc<RefCell<dyn Component>>> = self.components.iter_mut().map(|x| x.clone()).collect();
-        for cmp in comps {
-            cmp.borrow_mut().render(TickInfo { delta_time: delta_time, engine }, self);
-        }
+        // Idk if this is gonna be needed.
     }
 
     pub fn add_component<C: Component>(&mut self, component: C) {
@@ -192,5 +180,20 @@ impl GameObject {
         }
 
         vec
+    }
+
+    pub fn get_components_in_children<C: Component>(&self) -> Vec<CompRc<C>> {
+        let mut vec = self.get_components();
+        let children = self.get_all_children();
+
+        for child in children {
+            vec.extend(child.borrow().get_components().into_iter());
+        }
+
+        vec
+    }
+
+    pub fn get_all_components(&self) -> Vec<Rc<RefCell<dyn Component>>> {
+        self.components.clone()
     }
 }

@@ -1,3 +1,5 @@
+use std::{rc::Rc, cell::RefCell};
+
 use crate::game_engine::{game_object::GameObject, self};
 
 use super::{Component, TickInfo};
@@ -11,7 +13,7 @@ pub struct TestComponent {
 }
 
 impl Component for TestComponent {
-    fn update(&mut self, _tick_info: TickInfo, _owner: &mut GameObject) {
+    fn update(&mut self, _tick_info: TickInfo, _owner: Rc<RefCell<GameObject>>) {
         self.count += 1;
         let current_tick = game_engine::Graphics::get_glfw_time();
 
@@ -26,7 +28,7 @@ impl Component for TestComponent {
         }
     }
 
-    fn fixed_update(&mut self, _tick_info: TickInfo, _owner: &mut GameObject) {
+    fn fixed_update(&mut self, _tick_info: TickInfo, _owner: Rc<RefCell<GameObject>>) {
         self.fixed_count += 1;
         let current_tick = game_engine::Graphics::get_glfw_time();
 

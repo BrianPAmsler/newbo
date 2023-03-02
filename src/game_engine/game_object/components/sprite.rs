@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, rc::Rc, cell::RefCell};
 
 use crate::game_engine::{Sprite, game_object::GameObject};
 
@@ -17,22 +17,23 @@ impl SpriteComponent {
 }
 
 impl Component for SpriteComponent {
-    fn init(&mut self, _engine: &mut crate::game_engine::Engine, _owner: &mut GameObject) {
+    fn init(&mut self, _engine: &mut crate::game_engine::Engine, _owner: Rc<RefCell<GameObject>>) {
         let gfx = _engine.get_gfx_mut();
 
         gfx.update_sprite(self.sprite, self.index);
     }
 
-    fn update(&mut self, _info: super::TickInfo, _owner: &mut GameObject) {
+    fn update(&mut self, _info: super::TickInfo, _owner: Rc<RefCell<GameObject>>) {
         let engine = _info.engine;
         let gfx = engine.get_gfx_mut();
+        let parent = _owner.borrow();
 
-        let real_sprite = Sprite { sprite_id: self.sprite.sprite_id, x: _owner.pos.x, y: _owner.pos.y, w: self.sprite.w, h: self.sprite.h };
+        let real_sprite = Sprite { sprite_id: self.sprite.sprite_id, x: parent.pos.x, y: parent.pos.y, w: self.sprite.w, h: self.sprite.h };
 
         gfx.update_sprite(real_sprite, self.index);
     }
 
-    fn fixed_update(&mut self, _info: super::TickInfo, _owner: &mut GameObject) {}
+    fn fixed_update(&mut self, _info: super::TickInfo, _owner: Rc<RefCell<GameObject>>) {}
 
-    fn render(&mut self, _info: super::TickInfo, _owner: &mut GameObject) {}
+    fn render(&mut self, _info: super::TickInfo, _owner: Rc<RefCell<GameObject>>) {}
 }

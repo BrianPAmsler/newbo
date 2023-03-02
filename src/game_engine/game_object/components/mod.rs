@@ -21,10 +21,10 @@ pub struct TickInfo<'a> {
 }
 
 pub trait Component: Downcast {
-    fn init(&mut self, _engine: &mut Engine, _owner: &mut GameObject) {}
-    fn update(&mut self, _info: TickInfo, _owner: &mut GameObject) {}
-    fn fixed_update(&mut self, _info: TickInfo, _owner: &mut GameObject) {}
-    fn render(&mut self, _info: TickInfo, _owner: &mut GameObject) {}
+    fn init(&mut self, _engine: &mut Engine, _owner: Rc<RefCell<GameObject>>) {}
+    fn update(&mut self, _info: TickInfo, _owner: Rc<RefCell<GameObject>>) {}
+    fn fixed_update(&mut self, _info: TickInfo, _owner: Rc<RefCell<GameObject>>) {}
+    fn render(&mut self, _info: TickInfo, _owner: Rc<RefCell<GameObject>>) {}
 }
 
 impl_downcast!(Component);
