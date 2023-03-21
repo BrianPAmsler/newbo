@@ -4,6 +4,7 @@ mod n_array;
 mod vectors;
 mod err;
 mod quadtree;
+mod polygon;
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -11,6 +12,7 @@ use game_object::*;
 use glfw::{Key, Action};
 pub use vectors::*;
 pub use n_array::NArray;
+pub use polygon::Polygon;
 
 use graphics::*;
 

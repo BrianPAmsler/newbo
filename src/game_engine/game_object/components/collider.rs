@@ -4,6 +4,7 @@ use super::Component;
 use std::{hash::Hash, rc::Rc, cell::RefCell};
 
 pub struct Collider {
+    owner: Option<Rc<RefCell<GameObject>>>,
     x: f32,
     y: f32,
     pub w: f32,
@@ -27,6 +28,10 @@ impl Hash for Collider {
 }
 
 impl Component for Collider {
+    fn init(&mut self, _engine: &mut Engine, _owner: Rc<RefCell<GameObject>>) {
+        self.owner = Some(Rc::clone(&_owner));
+    }
+
     fn update(&mut self, _info: super::TickInfo, _owner: Rc<RefCell<GameObject>>) {
         // This is hacky as fuck i need a better solution.
         self.x = _owner.borrow().pos.x;
@@ -36,10 +41,14 @@ impl Component for Collider {
 
 impl Collider {
     pub fn new(w: f32, h: f32, on_collide: Option<Box<dyn Fn(&Collider, &Collider)>>) -> Collider {
-        Collider { x: 0.0, y: 0.0, w, h, on_collide }
+        Collider { owner: None, x: 0.0, y: 0.0, w, h, on_collide }
     }
 
     pub fn check_collision(&self, other: &Collider) -> bool {
+        if self as *const Collider == other as *const Collider {
+            return false;
+        }
+
         let hw = self.w / 2.0;
         let hh = self.h / 2.0;
         let points = [(self.x - hw, self.y - hh), (self.x + hw, self.y - hh), (self.x - hw, self.y + hh), (self.x + hw, self.y + hh)];
@@ -59,6 +68,9 @@ impl Collider {
     pub fn move_and_check_collision(&mut self, engine: &mut Engine) {
         let colliders = engine.get_root_object().borrow().get_components_in_children::<Collider>();
 
-
+        for collider in colliders {
+            let rf = collider.borrow();
+            
+        }
     }
 }

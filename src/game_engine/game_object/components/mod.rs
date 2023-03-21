@@ -69,4 +69,8 @@ impl<C: Component> CompRc<C> {
     pub fn take_rc(self) -> Rc<RefCell<dyn Component>> {
         self.rc
     }
+
+    pub fn ptr_eq(&self, other: &CompRc<C>) -> bool {
+        Rc::ptr_eq(&self.rc, &other.rc)
+    }
 }

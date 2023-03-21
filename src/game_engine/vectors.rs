@@ -2,7 +2,7 @@ use std::fmt::{Display, Formatter, Result};
 
 use std::ops;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct Vector2 {
     pub x: f32,
     pub y: f32
@@ -15,6 +15,19 @@ impl Vector2 {
 
     pub fn dot(&self, o: Vector2) -> f32 {
         self.x * o.x + self.y * o.y
+    }
+
+    pub fn magnitude(&self) -> f32 {
+        (self.x * self.x + self.y * self.y).sqrt()
+    }
+
+    pub fn normalize(&self) -> Vector2 {
+        let mag = self.magnitude();
+        Vector2 { x: self.x / mag, y: self.y / mag }
+    }
+
+    pub fn ortho(&self) -> Vector2 {
+        Vector2 { x: self.y, y: -self.x }
     }
 
     pub const ZERO: Vector2 = Vector2 { x: 0.0, y: 0.0 };
