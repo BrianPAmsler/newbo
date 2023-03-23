@@ -81,6 +81,7 @@ impl Engine {
         
         let mut should_close = false;
 
+        self.init();
         // Loop until the user closes the window
         while self.gfx.window_alive() {
             // Poll for and process events
@@ -156,7 +157,7 @@ impl Engine {
         for obj in stuff {
             obj.borrow_mut().init(self);
             let comps = obj.borrow().get_all_components();
-            for comp in comps {
+            for comp in &comps {
                 comp.borrow_mut().init(self, Rc::clone(&obj));
             }
         }

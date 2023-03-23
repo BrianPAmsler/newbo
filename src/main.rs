@@ -29,7 +29,7 @@ fn main() {
     ground_sprite.sprite.w = 2.0;
     ground_sprite.sprite.h = 0.5;
     ground.borrow_mut().add_component(ground_sprite);
-    let ground_collider = Collider::new(2.0, 0.5, None);
+    let ground_collider = Collider::new(Polygon::new((0.0, 0.0).into(), vec![(-1.0, 0.25).into(), (1.0, 0.25).into(), (1.0, -0.25).into(), (-1.0, -0.25).into()]));
     ground.borrow_mut().add_component(ground_collider);
 
     let guy = GameObject::create_empty("guy".to_owned(), Some(root.clone()));
@@ -38,7 +38,7 @@ fn main() {
     guy_sprite.sprite.h = 1.0;
     guy.borrow_mut().add_component(guy_sprite);
     guy.borrow_mut().add_component(WASDy { speed: 1.0 });
-    let guy_collider = Collider::new(0.5, 1.0, Some(Box::new(|_, _| (println!("collide!")))));
+    let guy_collider = Collider::new(Polygon::new((0.0, 0.0).into(), vec![(-0.25, 0.5).into(), (0.25, 0.5).into(), (0.25, -0.5).into(), (-0.25, -0.5).into()]));
     guy.borrow_mut().add_component(guy_collider);
 
     println!("Starting Game Loop...");

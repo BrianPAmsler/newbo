@@ -3,9 +3,9 @@ pub mod components;
 
 use components::Component;
 
-use self::components::CompRc;
+use self::components::{CompRc, Collider};
 
-use super::{Vector3, Engine};
+use super::{Vector3, Engine, Vector2};
 
 pub struct GameObject {
     name: String,
@@ -156,8 +156,8 @@ impl GameObject {
 
     pub fn get_component<C: Component>(&self) -> Option<CompRc<C>> {
         for c in &self.components {
-            let t = c.borrow();
-            let r: Option<&C> = t.downcast_ref();
+            let t = c.as_ptr();
+            let r: Option<&C> = unsafe {(*t).downcast_ref()};
 
             if r.is_some() {
                 return CompRc::downcast_rc(c);
@@ -171,8 +171,8 @@ impl GameObject {
         let mut vec = Vec::new();
 
         for c in &self.components {
-            let t = c.borrow();
-            let r: Option<&C> = t.downcast_ref();
+            let t = c.as_ptr();
+            let r: Option<&C> = unsafe {(*t).downcast_ref()};
 
             if r.is_some() {
                 vec.push(CompRc::downcast_rc(c).unwrap());
@@ -195,5 +195,33 @@ impl GameObject {
 
     pub fn get_all_components(&self) -> Vec<Rc<RefCell<dyn Component>>> {
         self.components.clone()
+    }
+
+    pub fn move_and_collide(obj: &Rc<RefCell<GameObject>>, offset: Vector3, engine: &mut Engine) {
+        obj.borrow_mut().pos += offset;
+
+        let c = obj.borrow().get_component();
+
+        if c.is_some() {
+            let c = c.unwrap();
+
+            let all_colliders = engine.get_root_object().borrow().get_components_in_children::<Collider>();
+            for collider in all_colliders {
+                if !collider.ptr_eq(&c) {
+                    let o_owner = collider.borrow().get_owner();
+                    let s = &mut c.borrow_mut().hitbox;
+                    let o = &mut collider.borrow_mut().hitbox;
+
+                    s.pos = Vector2 { x: obj.borrow().pos.x, y: obj.borrow().pos.y };
+                    o.pos = Vector2 { x: o_owner.borrow().pos.x, y: o_owner.borrow().pos.y };
+
+                    let push = s.collide(o);
+
+                    if push.is_some() {
+                        obj.borrow_mut().pos += Vector3 { x: push.unwrap().x, y: push.unwrap().y, z: 0.0 };
+                    }
+                }
+            }
+        }
     }
 }

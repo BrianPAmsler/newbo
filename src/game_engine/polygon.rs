@@ -2,21 +2,21 @@ use super::Vector2;
 
 #[derive(Clone)]
 pub struct Polygon {
-    pub center: Vector2,
+    pub pos: Vector2,
     verticies: Vec<Vector2>
 }
 
 impl Polygon {
     pub fn new(center: Vector2, verticies: Vec<Vector2>) -> Polygon {
-        Polygon { center, verticies }
+        Polygon { pos: center, verticies }
     }
 
     pub fn get_edges(&self) -> Vec<(Vector2, Vector2)> {
         let mut out = Vec::new();
 
         for i in 0..self.verticies.len() {
-            let a = self.verticies[i] + self.center;
-            let b = self.verticies[(i + 1) % self.verticies.len()] + self.center;
+            let a = self.verticies[i] + self.pos;
+            let b = self.verticies[(i + 1) % self.verticies.len()] + self.pos;
 
             out.push((a, b));
         }
@@ -25,7 +25,7 @@ impl Polygon {
     }
 
     pub fn get_points(&self) -> Vec<Vector2> {
-        self.verticies.iter().map(|x| x.to_owned() + self.center).collect()
+        self.verticies.iter().map(|x| x.to_owned() + self.pos).collect()
     }
 
     pub fn collide(&self, other: &Polygon) -> Option<Vector2> {
