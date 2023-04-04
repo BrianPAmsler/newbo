@@ -294,8 +294,6 @@ impl Graphics {
         unsafe {
             glBindVertexArray(self.terrain_vao);
             glBindBuffer(GL_ARRAY_BUFFER, self.terrain_vbo);
-            
-            println!("Buffering: vao = {}; vbo = {}", self.terrain_vao, self.terrain_vbo);
 
             // Send verticies to gpu
             glBufferData(

@@ -86,9 +86,6 @@ impl Shader {
     pub unsafe fn load_shader_program(name: &str, vert: &str, frag: &str, args: &[ShaderArg]) -> Shader {
         let vert = insert_shader_args(vert, args);
         let frag = insert_shader_args(frag, args);
-
-        println!("{}", vert);
-
         let vertex_shader = glCreateShader(GL_VERTEX_SHADER);
         assert_ne!(vertex_shader, 0);
                                     

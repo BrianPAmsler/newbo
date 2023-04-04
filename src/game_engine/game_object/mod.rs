@@ -157,6 +157,7 @@ impl GameObject {
     pub fn get_component<C: Component>(&self) -> Option<CompRc<C>> {
         for c in &self.components {
             let t = c.as_ptr();
+            // This should be fine since the contents of r are not being used and any borrow issues will still panic at the downcast_rc function call
             let r: Option<&C> = unsafe {(*t).downcast_ref()};
 
             if r.is_some() {
@@ -172,7 +173,8 @@ impl GameObject {
 
         for c in &self.components {
             let t = c.as_ptr();
-            let r: Option<&C> = unsafe {(*t).downcast_ref()};
+            // This should be fine since the contents of r are not being used and any borrow issues will still panic at the downcast_rc function call
+            let r: Option<&C> = unsafe {(*t).downcast_ref()}; 
 
             if r.is_some() {
                 vec.push(CompRc::downcast_rc(c).unwrap());
