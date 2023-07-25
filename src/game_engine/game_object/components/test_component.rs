@@ -1,6 +1,6 @@
 use std::{rc::Rc, cell::RefCell};
 
-use crate::game_engine::{game_object::GameObject, self};
+use crate::game_engine::{game_object::GameObject, self, Vector3};
 
 use super::{Component, TickInfo};
 
@@ -26,6 +26,10 @@ impl Component for TestComponent {
             self.count = 0;
             self.last_update = current_tick;
         }
+
+        let cam = _tick_info.engine.get_gfx_mut().get_camera_mut();
+        cam.pos += Vector3::new(0.1, -0.2, 0.0) * _tick_info.delta_time as f32;
+        //cam.rot += Vector3::new(0.0, 0.0, 0.1) * _tick_info.delta_time as f32;
     }
 
     fn fixed_update(&mut self, _tick_info: TickInfo, _owner: Rc<RefCell<GameObject>>) {

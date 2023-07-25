@@ -5,8 +5,10 @@ use glfw::{FlushedMessages, WindowEvent, Context};
 use gl33::global_loader::*;
 use gl33::gl_enumerations::*;
 
+use std::fmt::Display;
 use std::fs::File;
 use std::mem::MaybeUninit;
+use std::ops::Mul;
 use std::os::raw::c_void;
 use std::sync::mpsc::Receiver;
 
@@ -20,7 +22,10 @@ mod shader;
 use shader::*;
 
 use super::Sprite;
+use super::Vector2;
+use super::Vector3;
 use super::err::{EngineError, EngineErrorTrait};
+use super::matrix::Mat4x4;
 
 mod missing_gl_enums;
 
@@ -36,6 +41,69 @@ const SPRITE_VERT_SHADER: &'static str = include_str!("shaders/sprite_shader.ver
 const SPRITE_FRAG_SHADER: &'static str = include_str!("shaders/sprite_shader.frag");
 
 const INSTANCES: usize = 500;
+
+pub struct Camera {
+    pub pos: Vector3,
+    pub rot: Vector3,
+    pub size: Vector2,
+    pub near: f32,
+    pub far: f32,
+}
+
+impl Camera {
+    pub fn get_viewmatrix(&self) -> Mat4x4 {
+        // TODO: manually premultiply these matricies
+        let pitch = self.rot.x;
+        let yaw = self.rot.y;
+        let roll = self.rot.z;
+
+        let p_sin = f32::sin(pitch);
+        let p_cos = f32::cos(pitch);
+        
+        let y_sin = f32::sin(yaw);
+        let y_cos = f32::cos(yaw);
+
+        let r_sin = f32::sin(roll);
+        let r_cos = f32::cos(roll);
+
+        let p_matrix = Mat4x4 { values: [1.0,   0.0,    0.0, 0.0,
+                                                 0.0, p_cos, -p_sin, 0.0,
+                                                 0.0, p_sin,  p_cos, 0.0,
+                                                 0.0,   0.0,    0.0, 1.0]};
+        
+        let y_matrix = Mat4x4 { values: [ y_cos, 0.0, y_sin, 0.0,
+                                                    0.0, 1.0,   0.0, 0.0,
+                                                 -y_sin, 0.0, y_cos, 0.0,
+                                                    0.0, 0.0,   0.0, 1.0 ]};
+
+        let r_matrix = Mat4x4 { values: [r_cos, -r_sin, 0.0, 0.0,
+                                                 r_sin,  r_cos, 0.0, 0.0,
+                                                   0.0,    0.0, 1.0, 0.0,
+                                                   0.0,    0.0, 0.0, 1.0 ]};
+        
+        let mut rotation_matrix = p_matrix * y_matrix * r_matrix;
+        
+        rotation_matrix.set(4, 1, self.pos.x);
+        rotation_matrix.set(4, 2, self.pos.y);
+        rotation_matrix.set(4, 3, self.pos.z);
+
+        rotation_matrix.inverse().unwrap()
+    }
+
+    pub fn ortho(&self) -> Mat4x4 {
+        let r = self.size.x / 2.0;
+        let l = -r;
+        let t = self.size.y / 2.0;
+        let b = -t;
+        let f = self.far;
+        let n = self.near;
+
+        Mat4x4 { values: [ 2.0 / (r - l), 0.0, 0.0, -(r + l) / (r - l),
+                           0.0, 2.0 / (t - b), 0.0, -(t + b) / (t - b),
+                           0.0, 0.0, -2.0 / (f - n), -(f + n) / (f - n),
+                           0.0, 0.0, 0.0, 1.0 ] }
+    }
+}
 
 pub struct TerrainVertex {
     pub x: f32,
@@ -94,6 +162,7 @@ pub struct Graphics {
     sprite_vao: u32,
     terrain_vbo: u32,
     terrain_vao: u32,
+    camera: Camera,
     sprites: [f32; INSTANCES * 4],
     sprite_ids: [i32; INSTANCES]
 }
@@ -158,7 +227,7 @@ impl Graphics {
         window.make_current();
         window.set_key_polling(true);
 
-        let mut gfx = Graphics {window: window,
+        let mut gfx = Graphics { window,
             events,
             terrain_shader: Shader::null_shader(),
             sprite_shader: Shader::null_shader(),
@@ -166,6 +235,7 @@ impl Graphics {
             sprite_vao: 0,
             terrain_vbo: 0,
             terrain_vao: 0,
+            camera: Camera { pos: Vector3::ZERO, rot: Vector3::ZERO, size: Vector2::UNIT, near: 0.1, far: 1000.0 },
             sprites: [0.0; INSTANCES * 4],
             sprite_ids: [0; INSTANCES]
         };
@@ -308,7 +378,7 @@ impl Graphics {
         }
     }
 
-    pub fn render(&self, offset1: f32, offset2: f32) {
+    pub fn render(&self) {
         unsafe {
             glClear(GL_COLOR_BUFFER_BIT);
 
@@ -317,16 +387,14 @@ impl Graphics {
             
             let program = self.terrain_shader.get_program();
             glUseProgram(program);
-            let loc: i32 = glGetUniformLocation(program, b"offset\0" as *const u8);
+            let loc: i32 = glGetUniformLocation(program, b"transform\0" as *const u8);
+
+            let view_matrix = self.camera.get_viewmatrix();
+            let ortho = self.camera.ortho();
+            let t = ortho * view_matrix;
         
             if loc >= 0 {
-                glUniform3f(loc, offset1, 0.0, 0.0);
-            }
-        
-            glDrawArrays(GL_TRIANGLES, 0, 3);
-        
-            if loc >= 0 {
-                glUniform3f(loc, offset2, 0.0, 0.0);
+                glUniformMatrix4fv(loc, 1, 0, &t.values[0] as *const f32);
             }
         
             glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -383,5 +451,13 @@ impl Graphics {
         self.sprites[idx * 4 + 3] = sprite.h;
 
         self.sprite_ids[idx] = sprite.sprite_id;
+    }
+
+    pub fn get_camera(&self) -> &Camera {
+        &self.camera
+    }
+
+    pub fn get_camera_mut(&mut self) -> &mut Camera {
+        &mut self.camera
     }
 }

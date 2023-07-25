@@ -6,7 +6,9 @@ use crate::game_engine::{game_object::GameObject, Vector3};
 use super::{Component, SpriteComponent};
 
 pub struct WASDy {
-    pub speed: f32
+    pub speed: f32,
+    pub velocity: f32,
+    pub acc: f32
 }
 
 impl Component for WASDy {
@@ -27,8 +29,18 @@ impl Component for WASDy {
         if _info.engine.get_key(Key::D) {
             move_vector.x += self.speed * _info.delta_time as f32;
         }
+        if _info.engine.get_key(Key::Space) && _owner.borrow().is_grounded() {
+            self.velocity = self.acc * -0.5;
+        }
+
+        self.velocity += self.acc * _info.delta_time as f32;
+        move_vector += (0.0, self.velocity * _info.delta_time as f32, 0.0).into();
 
         GameObject::move_and_collide(&_owner, move_vector, _info.engine);
+
+        if _owner.borrow().is_grounded() {
+            self.velocity = 0.0;
+        }
     }
 
     fn fixed_update(&mut self, _info: super::TickInfo, _owner: Rc<RefCell<GameObject>>) {}

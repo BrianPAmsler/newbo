@@ -12,6 +12,7 @@ pub struct GameObject {
     pos: Vector3,
     rot: Vector3,
     scale: Vector3,
+    grounded: bool,
     components: Vec<Rc<RefCell<dyn Component>>>,
     children: Vec<Rc<RefCell<GameObject>>>,
     parent: Option<Rc<RefCell<GameObject>>>
@@ -36,6 +37,7 @@ impl GameObject {
             pos: Vector3::ZERO,
             rot: Vector3::ZERO,
             scale: Vector3::ONE,
+            grounded: false,
             components: Vec::new(),
             children: Vec::new(),
             parent: None
@@ -68,6 +70,10 @@ impl GameObject {
 
     pub(in crate::game_engine) fn render(&mut self, delta_time: f64, engine: &mut Engine) {
         // Idk if this is gonna be needed.
+    }
+
+    pub fn is_grounded(&self) -> bool {
+        self.grounded
     }
 
     pub fn add_component<C: Component>(&mut self, component: C) {
@@ -200,6 +206,7 @@ impl GameObject {
     }
 
     pub fn move_and_collide(obj: &Rc<RefCell<GameObject>>, offset: Vector3, engine: &mut Engine) {
+        obj.borrow_mut().grounded = false;
         obj.borrow_mut().pos += offset;
 
         let c = obj.borrow().get_component();
@@ -221,6 +228,9 @@ impl GameObject {
 
                     if push.is_some() {
                         obj.borrow_mut().pos += Vector3 { x: push.unwrap().x, y: push.unwrap().y, z: 0.0 };
+                        if push.unwrap().y > 0.0 {
+                            obj.borrow_mut().grounded = true;
+                        }
                     }
                 }
             }

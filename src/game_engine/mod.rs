@@ -5,6 +5,7 @@ mod vectors;
 mod err;
 mod quadtree;
 mod polygon;
+mod matrix;
 
 use std::{cell::RefCell, rc::Rc};
 
@@ -21,7 +22,7 @@ use self::{err::EngineError, game_object::components::TickInfo};
 const VERTICES: [TerrainVertex; 3] = [
     TerrainVertex {x: -0.5, y: -0.5, z: 0.0, r: 1.0, g: 0.0, b: 0.0},
     TerrainVertex {x: 0.5, y: -0.5, z: 0.0, r: 0.0, g: 1.0, b: 0.0},
-    TerrainVertex {x: 0.0, y: 0.5, z: 0.0, r: 0.0, g: 0.0, b: 1.0}
+    TerrainVertex {x: -0.5, y: 0.5, z: 0.0, r: 0.0, g: 0.0, b: 1.0}
 ];
 
 pub struct Engine {
@@ -29,9 +30,7 @@ pub struct Engine {
     fixed_tick_duration: f64,
     gfx: Graphics,
     root_object: Rc<RefCell<GameObject>>,
-    keys: [bool; 350],
-    offset1: f32,
-    offset2: f32
+    keys: [bool; 350]
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -62,7 +61,7 @@ impl Engine {
         
         gfx.buffer_terrain_verticies(&VERTICES);
 
-        Ok(Engine { running: false, fixed_tick_duration: 1.0 / 60.0, gfx: gfx, root_object: GameObject::create_empty("root".to_owned(), None), keys: [false; 350], offset1: 0.0, offset2: 0.0 })
+        Ok(Engine { running: false, fixed_tick_duration: 1.0 / 60.0, gfx: gfx, root_object: GameObject::create_empty("root".to_owned(), None), keys: [false; 350] })
     }
 
     pub fn start_game_loop(&mut self) -> Result<(), EngineError> {
@@ -121,7 +120,7 @@ impl Engine {
             }
 
             // Render
-            self.gfx.render(self.offset1, self.offset2);
+            self.gfx.render();
 
             // Swap front and back buffers
             self.gfx.swap_window_buffers();
@@ -153,6 +152,11 @@ impl Engine {
     }
 
     fn init(&mut self) {
+        let comps = self.root_object.borrow().get_all_components();
+        for comp in &comps {
+            comp.borrow_mut().init(self, Rc::clone(&self.root_object));
+        }
+
         let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
             obj.borrow_mut().init(self);
@@ -164,9 +168,12 @@ impl Engine {
     }
 
     fn game_tick(&mut self, delta_time: f64) {
-        self.offset1 += 0.01 * delta_time as f32;
-
-        self.root_object.clone().borrow_mut().update(delta_time, self);
+        self.root_object.clone().borrow_mut().fixed_update(delta_time, self);
+        let comps = self.root_object.borrow().get_all_components();
+        for comp in &comps {
+            let root_rc = Rc::clone(&self.root_object);
+            comp.borrow_mut().update(TickInfo { delta_time, engine: self }, root_rc);
+        }
 
         let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
@@ -179,9 +186,12 @@ impl Engine {
     }
 
     fn fixed_game_tick(&mut self, delta_time: f64) {
-        self.offset2 -= 0.01 * delta_time as f32;
-
         self.root_object.clone().borrow_mut().fixed_update(delta_time, self);
+        let comps = self.root_object.borrow().get_all_components();
+        for comp in &comps {
+            let root_rc = Rc::clone(&self.root_object);
+            comp.borrow_mut().fixed_update(TickInfo { delta_time, engine: self }, root_rc);
+        }
 
         let stuff = self.root_object.borrow().get_all_children();
         for obj in stuff {
