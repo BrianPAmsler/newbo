@@ -382,16 +382,17 @@ impl Graphics {
         unsafe {
             glClear(GL_COLOR_BUFFER_BIT);
 
+            // Get transformation matrix
+            let view_matrix = self.camera.get_viewmatrix();
+            let ortho = self.camera.ortho();
+            let t = ortho * view_matrix;
+
             glBindVertexArray(self.terrain_vao);
             glBindBuffer(GL_ARRAY_BUFFER, self.terrain_vbo);
             
             let program = self.terrain_shader.get_program();
             glUseProgram(program);
             let loc: i32 = glGetUniformLocation(program, b"transform\0" as *const u8);
-
-            let view_matrix = self.camera.get_viewmatrix();
-            let ortho = self.camera.ortho();
-            let t = ortho * view_matrix;
         
             if loc >= 0 {
                 glUniformMatrix4fv(loc, 1, 0, &t.values[0] as *const f32);
@@ -404,6 +405,18 @@ impl Graphics {
             
             let program = self.sprite_shader.get_program();
             glUseProgram(program);
+            
+            let loc: i32 = glGetUniformLocation(program, b"view_matrix\0" as *const u8);
+        
+            if loc >= 0 {
+                glUniformMatrix4fv(loc, 1, 0, &view_matrix.values[0] as *const f32);
+            }
+            
+            let loc: i32 = glGetUniformLocation(program, b"projection_matrix\0" as *const u8);
+        
+            if loc >= 0 {
+                glUniformMatrix4fv(loc, 1, 0, &ortho.values[0] as *const f32);
+            }
             
             let loc: i32 = glGetUniformLocation(self.sprite_shader.get_program(), b"sprite_info\0" as *const u8);
         
