@@ -7,12 +7,6 @@ use game_engine::*;
 use game_engine::game_object::components::*;
 use game_engine::game_object::GameObject;
 
-extern crate rand;
-
-struct Test {
-    pub n: i32
-}
-
 fn main() {
     println!("Initializing Engine...");
     let mut engine = Engine::init_engine().unwrap();
@@ -20,7 +14,7 @@ fn main() {
     println!("Engine Initialized.");
 
     let cam = engine.get_gfx_mut().get_camera_mut();
-    cam.size = Vector2::new(0.8, 0.6) * 4.0;
+    cam.size = Vector2::new(0.8, 0.6) * 3.0;
 
     let root = engine.get_root_object();
 

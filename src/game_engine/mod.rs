@@ -27,7 +27,7 @@ const VERTICES: [TerrainVertex; 3] = [
 
 pub struct Engine {
     running: bool,
-    fixed_tick_duration: f64,
+    fixed_tick_duration: f32,
     gfx: Graphics,
     root_object: Rc<RefCell<GameObject>>,
     keys: [bool; 350]
@@ -72,7 +72,7 @@ impl Engine {
         self.running = true;
 
         let mut last_tick = Graphics::get_glfw_time();
-        let mut last_fixed_tick: f64;
+        let mut last_fixed_tick;
 
         let mut fixed_tick_overflow = 0.0;
 
@@ -114,7 +114,7 @@ impl Engine {
 
             // Add overflow to adjust for errors in timing
             if fixed_diff + fixed_tick_overflow >= 0.0 {
-                fixed_tick_overflow = f64::max(0.0, fixed_diff * 2.0);
+                fixed_tick_overflow = f32::max(0.0, fixed_diff * 2.0);
                 self.fixed_game_tick(current_time - last_fixed_tick);
                 last_fixed_tick = current_time;
             }
@@ -131,7 +131,7 @@ impl Engine {
         Ok(())
     }
 
-    pub fn set_fixed_tick_rate(&mut self, tickrate:  f64) {
+    pub fn set_fixed_tick_rate(&mut self, tickrate:  f32) {
         self.fixed_tick_duration = 1.0 / tickrate;
     }
 
@@ -167,7 +167,7 @@ impl Engine {
         }
     }
 
-    fn game_tick(&mut self, delta_time: f64) {
+    fn game_tick(&mut self, delta_time: f32) {
         self.root_object.clone().borrow_mut().fixed_update(delta_time, self);
         let comps = self.root_object.borrow().get_all_components();
         for comp in &comps {
@@ -185,7 +185,7 @@ impl Engine {
         }
     }
 
-    fn fixed_game_tick(&mut self, delta_time: f64) {
+    fn fixed_game_tick(&mut self, delta_time: f32) {
         self.root_object.clone().borrow_mut().fixed_update(delta_time, self);
         let comps = self.root_object.borrow().get_all_components();
         for comp in &comps {

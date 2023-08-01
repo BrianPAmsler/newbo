@@ -16,7 +16,7 @@ use crate::game_engine::Engine;
 use super::GameObject;
 
 pub struct TickInfo<'a> {
-    pub(in crate::game_engine) delta_time: f64,
+    pub(in crate::game_engine) delta_time: f32,
     pub(in crate::game_engine) engine: &'a mut Engine
 }
 

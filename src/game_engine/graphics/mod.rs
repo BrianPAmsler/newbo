@@ -199,10 +199,10 @@ impl Graphics {
         GL_INITIALIZED.load(Ordering::Relaxed)
     }
 
-    pub fn get_glfw_time() -> f64 {
+    pub fn get_glfw_time() -> f32 {
 
         let glfw = unsafe { GLFW.assume_init_ref() };
-        glfw.get_time()
+        glfw.get_time() as f32
     }
 
     pub fn create_window() -> Result<Graphics, EngineError> {
@@ -385,7 +385,7 @@ impl Graphics {
             // Get transformation matrix
             let view_matrix = self.camera.get_viewmatrix();
             let ortho = self.camera.ortho();
-            let t = ortho * view_matrix;
+            let t = view_matrix * ortho;
 
             glBindVertexArray(self.terrain_vao);
             glBindBuffer(GL_ARRAY_BUFFER, self.terrain_vbo);

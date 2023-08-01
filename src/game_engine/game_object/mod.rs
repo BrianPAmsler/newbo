@@ -60,15 +60,15 @@ impl GameObject {
         // Idk if this is gonna be needed.
     }
 
-    pub(in crate::game_engine) fn update(&mut self, delta_time: f64, engine: &mut Engine) {
+    pub(in crate::game_engine) fn update(&mut self, delta_time: f32, engine: &mut Engine) {
         // Idk if this is gonna be needed.
     }
 
-    pub(in crate::game_engine) fn fixed_update(&mut self, delta_time: f64, engine: &mut Engine) {
+    pub(in crate::game_engine) fn fixed_update(&mut self, delta_time: f32, engine: &mut Engine) {
         // Idk if this is gonna be needed.
     }
 
-    pub(in crate::game_engine) fn render(&mut self, delta_time: f64, engine: &mut Engine) {
+    pub(in crate::game_engine) fn render(&mut self, delta_time: f32, engine: &mut Engine) {
         // Idk if this is gonna be needed.
     }
 

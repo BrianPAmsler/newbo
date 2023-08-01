@@ -33,6 +33,23 @@ impl Component for WASDy {
             self.velocity = self.acc * -0.5;
         }
 
+        if _info.engine.get_key(Key::Right) {
+            let cam = _info.engine.get_gfx_mut().get_camera_mut();
+            cam.pos += Vector3::new(0.1, 0.0, 0.0) * _info.delta_time as f32;
+        }
+        if _info.engine.get_key(Key::Left) {
+            let cam = _info.engine.get_gfx_mut().get_camera_mut();
+            cam.pos += Vector3::new(-0.1, 0.0, 0.0) * _info.delta_time as f32;
+        }
+        if _info.engine.get_key(Key::Up) {
+            let cam = _info.engine.get_gfx_mut().get_camera_mut();
+            cam.pos += Vector3::new(0.0, 0.1, 0.0) * _info.delta_time as f32;
+        }
+        if _info.engine.get_key(Key::Down) {
+            let cam = _info.engine.get_gfx_mut().get_camera_mut();
+            cam.pos += Vector3::new(0.0, -0.1, 0.0) * _info.delta_time as f32;
+        }
+
         self.velocity += self.acc * _info.delta_time as f32;
         move_vector += (0.0, self.velocity * _info.delta_time as f32, 0.0).into();
 
