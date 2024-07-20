@@ -5,6 +5,8 @@ use glfw::{FlushedMessages, WindowEvent, Context};
 use gl33::global_loader::*;
 use gl33::gl_enumerations::*;
 
+use std::borrow::BorrowMut;
+use std::cell::RefCell;
 use std::fmt::Display;
 use std::fs::File;
 use std::mem::MaybeUninit;
@@ -167,13 +169,12 @@ pub struct Graphics {
     sprite_ids: [i32; INSTANCES]
 }
 
-fn get_proc_address(window: &glfw::Window, fn_name: *const u8) -> *const c_void {
+fn get_proc_address(window: &mut glfw::Window, fn_name: *const u8) -> *const c_void {
     // The fact that I need to do ths is bullshit, but I don't see any way around it.
-    let w = unsafe {&mut *(window as *const glfw::Window as *mut glfw::Window)};
     let fn_name_slice = std::str::from_utf8(unsafe {std::slice::from_raw_parts(fn_name, strlen(fn_name as *const i8))}).unwrap();
 
     // I'm pretty sure this function shouldn't atually be mutating anything idk why the library wants a &mut self
-    w.get_proc_address(fn_name_slice)
+    window.get_proc_address(fn_name_slice)
 }
 
 impl Graphics {
@@ -240,9 +241,12 @@ impl Graphics {
             sprite_ids: [0; INSTANCES]
         };
 
+        let gfx = RefCell::new(gfx);
+
         // Do gl stuff
         unsafe {
-            load_global_gl(&|fn_name| get_proc_address(&gfx.window, fn_name));
+            load_global_gl(&|fn_name| get_proc_address(&mut gfx.borrow_mut().window, fn_name));
+            let mut gfx = gfx.into_inner();
             gfx.terrain_shader = Shader::load_shader_program("Terrain Shader", VERT_SHADER, FRAG_SHADER, &[]);
             
             glClearColor(0.2, 0.3, 0.3, 1.0);
@@ -355,9 +359,9 @@ impl Graphics {
     
             glBindBuffer(GL_ARRAY_BUFFER, 0);
             glBindVertexArray(0);
+
+            Ok(gfx)
         }
-    
-        Ok(gfx)
     }
     
     pub fn buffer_terrain_verticies(&mut self, verticies: &[TerrainVertex]) {
